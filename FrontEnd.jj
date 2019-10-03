@@ -1,0 +1,57 @@
+PARSER_BEGIN(FrontEnd)
+    public class FrontEnd {
+        public static void main(String[] args){
+
+        }
+    }
+PARSER_END(FrontEnd)
+
+/*Token*/
+
+SKIP: {
+    " " 
+}
+
+var, const, return, integer, boolean,
+void, main, if, else, true, false, while and skip.
+
+TOKEN: { /* Keywords */
+    < VAR : "var" >
+    | < CONST : "const" >
+    | < RETURN : "return" >
+    | < BOOLEAN : "boolean" >
+    | < VOID : "void" >
+    | < MAIN : "main" >
+    | < IF : "if" >
+    | < ELSE : "else" >
+    | < TRUE : "true" >
+    | < FALSE : "false" >
+    | < WHILE : "while" >
+    | < SKIP : "skip" >
+}
+
+TOKEN: {    /* Punctuation */ 
+    < COMMA : "," >
+    | < SEMIC : ";" >
+    | < COLON : ":" >
+    | < ASSIGN : "=" >
+    | < LBRACE : "{" >
+    | < RBRACE : "}" >
+    | < LBRACKET : "(" >
+    | < RBRACKET : ")" >
+    | < PLUS_SIGN : "+" >
+    | < MINUS_SIGN : "-" >
+    | < TILDE : "~" >
+    | < OR : "||" >
+    | < AND : "&&" >
+    | < EQUIV : "==" >
+    | < NOTEQUIV : "!=" >
+    | < LTHAN : "<" >
+    | < GTHAN : ">" >
+    | < LETHAN : "<=" >
+    | < GETHAN : ">=" >
+}
+
+TOKEN: { /* Numbers and identifiers */
+    <INTEGER : (<>)>
+}
