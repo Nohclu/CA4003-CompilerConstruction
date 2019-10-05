@@ -8,10 +8,6 @@ PARSER_END(FrontEnd)
 
 /*Token*/
 
-SKIP: {
-    " " 
-}
-
 var, const, return, integer, boolean,
 void, main, if, else, true, false, while and skip.
 
@@ -53,5 +49,33 @@ TOKEN: {    /* Punctuation */
 }
 
 TOKEN: { /* Numbers and identifiers */
-    <INTEGER : (<>)>
+      < #DIGIT : ["0"-"9"] >
+    | < #CHAR : ["a"-"z", "A"-"Z"] >
+    | < INTEGER : (<MINUS_SIGN>)? ["1"-"9"] (<DIGIT>)* | "0" >
+    | < ID : "_"? (<CHAR>)+ | (<DIGIT>)+>
+}
+
+TOKEN_MGR_DECLS :
+{
+    static int commentNesting = 0;
+}
+
+SKIP : { /*Ignore whitespaces*/
+    | " "
+    | "\t"
+    | "\n"
+}
+
+SKIP : {
+    < "//" (<CHAR> | <DIGIT>)* *("\n" | "\r" | "\r\n") >
+    | "/*" { commentNesting++; } : IN_COMMENT
+}
+
+<IN_COMMENT> SKIP : {
+    | "/*" {commentNesting++; }
+    | "*/" {commentNesting--; 
+            if (commentNesting == 0)
+                SwitchTo(DEFAULT);
+            }
+    | <~[]>
 }
