@@ -50,9 +50,9 @@ TOKEN: {    /* Punctuation */
 
 TOKEN: { /* Numbers and identifiers */
       < #DIGIT : ["0"-"9"] >
-    | < #CHAR : ["a"-"z", "A"-"Z"] >
+    | < #CHAR : ["aA"-"zZ"] >
     | < INTEGER : (<MINUS_SIGN>)? ["1"-"9"] (<DIGIT>)* | "0" >
-    | < ID : "_"? (<CHAR>)+ | (<DIGIT>)+>
+    | < ID : (<CHAR>) (<CHAR><DIGIT>)* "_"* >
 }
 
 TOKEN_MGR_DECLS :
