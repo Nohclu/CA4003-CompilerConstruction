@@ -79,3 +79,139 @@ SKIP : {
             }
     | <~[]>
 }
+
+void Program(): {}
+{
+    (DeclList() FunctionList() <MAIN>)
+}
+
+void DeclList(): {}
+{
+    (Decl() [<SEMIC> DeclList()])?
+}
+
+void Decl(): {}
+{
+    VarDecl()
+    | ConstDecl()
+}
+
+void VarDecl(): {}
+{
+    (<VAR> <ID> <COLON> Type())
+}
+
+void ConstDecl(): {}
+{
+    (<CONST> <ID> <COLON> Type() <ASSIGN> Expression())
+}
+
+void FunctionList(): {}
+{
+    (Function() FunctionList())?
+}
+
+void Function(): {}
+{
+    Type() <ID> <LBRACKET> ParameterList() <RBRACKET> 
+    <LBRACE>
+    DeclList()
+    <RBRACE>
+    StatementBlock() 
+    <RETURN> <LBRACKET> (Expression())? <RBRACKET><SEMIC>
+    <RBRACE>
+}
+
+void Type(): {}
+{
+    <INTEGER>
+    | <BOOLEAN>
+    | <VOID>
+}
+
+void ParameterList(): {}
+{
+    (NempParameterList())?
+}
+
+void NempParameterList(): {}
+{
+     <ID> <COLON> Type()
+    |<ID> <COLON> Type() <COMMA> NempParameterList()
+}
+
+void Main(): {}
+{
+    <MAIN> <LBRACE>
+    DeclList()
+    StatementBlock()
+    <RBRACE>
+}
+
+void StatementBlock(): {}
+{
+    (Statement() StatementBlock())?
+}
+
+void Statement(): {}
+{
+    <ID> <ASSIGN> Expression() <SEMIC>
+    | <ID> <LBRACKET> ArgList() <RBRACKET> <SEMIC>
+    | <LBRACE> StatementBlock() <RBRACE>
+    | <IF> Condition() <LBRACE> StatementBlock() <RBRACE> <ELSE> <LBRACE> StatementBlock() <RBRACE>
+    | <WHILE> Condition() <LBRACE> StatementBlock() <RBRACE>
+    | <SKIP> <SEMIC>
+}
+
+void Expression(): {}
+{
+    Fragment() BinaryArithOp() Fragment()
+    | <LBRACKET> Expression() <RBRACKET>
+    | <ID> <LBRACKET> ArgList() <RBRACKET>
+    | Fragment()
+}
+
+void BinaryArithOp(): {}
+{
+    <PLUS_SIGN> 
+    | <MINUS_SIGN>
+}
+
+void Fragment(): {}
+{
+    <ID>
+    | <MINUS_SIGN> <ID>
+    | <DIGIT>
+    | <TRUE>
+    | <FALSE>
+    | Expression()
+}
+
+void Condition(): {}
+{
+    <TILDE> Condition() 
+    | <LBRACKET> Condition() <RBRACKET> 
+    | Expression() CompOp() Expression()
+    | Condition() (<OR> | <AND>) Condition()
+}
+
+void CompOp(): {}
+{
+    <EQUIV>
+    | <NOTEQUIV>
+    | <LTHAN>
+    | <LETHAN
+    | <GTHAN>
+    | <GETHAN>
+}
+
+void ArgList(): {}
+{
+    (NempArgList())?
+}
+
+void NempArgList(): {}
+{
+    <ID>
+    | <ID> <COMMA> (NempArgList())
+}
