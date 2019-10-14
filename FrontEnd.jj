@@ -8,9 +8,6 @@ PARSER_END(FrontEnd)
 
 /*Token*/
 
-var, const, return, integer, boolean,
-void, main, if, else, true, false, while and skip.
-
 TOKEN: { /* Keywords */
     < VAR : "var" >
     | < CONST : "const" >
@@ -23,7 +20,8 @@ TOKEN: { /* Keywords */
     | < TRUE : "true" >
     | < FALSE : "false" >
     | < WHILE : "while" >
-    | < SKIP : "skip" >
+    | < SKP : "skip" >
+    | < INTEGER : "integer">
 }
 
 TOKEN: {    /* Punctuation */ 
@@ -50,9 +48,9 @@ TOKEN: {    /* Punctuation */
 
 TOKEN: { /* Numbers and identifiers */
       < #DIGIT : ["0"-"9"] >
-    | < #CHAR : ["aA"-"zZ"] >
-    | < INTEGER : (<MINUS_SIGN>)? ["1"-"9"] (<DIGIT>)* | "0" >
-    | < ID : (<CHAR>) (<CHAR><DIGIT>)* "_"* >
+    | < #CHAR : ["a"-"z"] ["A"-"Z"] >
+    | < NUMBER : (<MINUS_SIGN>)? ["1"-"9"] (<DIGIT>)* | "0" >
+    | < ID : (<CHAR>) (<CHAR><DIGIT>)* ("_")* >
 }
 
 TOKEN_MGR_DECLS :
@@ -61,18 +59,18 @@ TOKEN_MGR_DECLS :
 }
 
 SKIP : { /*Ignore whitespaces*/
-    | " "
+     " "
     | "\t"
     | "\n"
 }
 
 SKIP : {
-    < "//" (<CHAR> | <DIGIT>)* *("\n" | "\r" | "\r\n") >
+    < "//" (<CHAR> | <DIGIT>)* ("\n" | "\r" | "\r\n") >
     | "/*" { commentNesting++; } : IN_COMMENT
 }
 
 <IN_COMMENT> SKIP : {
-    | "/*" {commentNesting++; }
+      "/*" {commentNesting++; }
     | "*/" {commentNesting--; 
             if (commentNesting == 0)
                 SwitchTo(DEFAULT);
@@ -82,7 +80,7 @@ SKIP : {
 
 void Program(): {}
 {
-    (DeclList() FunctionList() <MAIN>)
+    (DeclList() FunctionList() <MAIN> <EOF>)
 }
 
 void DeclList(): {}
@@ -136,8 +134,12 @@ void ParameterList(): {}
 
 void NempParameterList(): {}
 {
-     <ID> <COLON> Type()
-    |<ID> <COLON> Type() <COMMA> NempParameterList()
+      <ID> <COLON> Type() NempParameterListPrime()
+}
+
+void NempParameterListPrime(): {}
+{
+    <COMMA> NempParameterList()
 }
 
 void Main(): {}
@@ -155,20 +157,29 @@ void StatementBlock(): {}
 
 void Statement(): {}
 {
-    <ID> <ASSIGN> Expression() <SEMIC>
-    | <ID> <LBRACKET> ArgList() <RBRACKET> <SEMIC>
+    <ID> StatementPrime()
     | <LBRACE> StatementBlock() <RBRACE>
     | <IF> Condition() <LBRACE> StatementBlock() <RBRACE> <ELSE> <LBRACE> StatementBlock() <RBRACE>
     | <WHILE> Condition() <LBRACE> StatementBlock() <RBRACE>
-    | <SKIP> <SEMIC>
+    | <SKP> <SEMIC>
+}
+
+void StatementPrime(): {}
+{
+    <ASSIGN> Expression() <SEMIC>
+    | <LBRACKET> ArgList() <RBRACKET> <SEMIC>
 }
 
 void Expression(): {}
 {
-    Fragment() BinaryArithOp() Fragment()
-    | <LBRACKET> Expression() <RBRACKET>
+    Fragment() ExpressionPrime()
     | <ID> <LBRACKET> ArgList() <RBRACKET>
-    | Fragment()
+    | <LBRACKET> Expression() <RBRACKET>
+}
+
+void ExpressionPrime(): {}
+{
+    BinaryArithOp() Fragment()
 }
 
 void BinaryArithOp(): {}
@@ -179,20 +190,30 @@ void BinaryArithOp(): {}
 
 void Fragment(): {}
 {
-    <ID>
+    <ID> FragmentPrime()
     | <MINUS_SIGN> <ID>
-    | <DIGIT>
+    | <NUMBER>
     | <TRUE>
     | <FALSE>
-    | Expression()
+    | <LBRACKET> Expression() <RBRACKET> FragmentPrime()
+}
+
+void FragmentPrime(): {}
+{
+    <LBRACKET> ArgList() <RBRACKET> FragmentPrime()
+    | (ExpressionPrime() FragmentPrime())?
 }
 
 void Condition(): {}
 {
-    <TILDE> Condition() 
-    | <LBRACKET> Condition() <RBRACKET> 
-    | Expression() CompOp() Expression()
-    | Condition() (<OR> | <AND>) Condition()
+    <TILDE> Condition() ConditionPrime()
+    | <LBRACKET> Condition() <RBRACKET>  ConditionPrime()
+    | Expression() CompOp() Expression() ConditionPrime()
+}
+
+void ConditionPrime(): {}
+{
+    ((<OR> | <AND>) Condition() ConditionPrime())?
 }
 
 void CompOp(): {}
@@ -200,7 +221,7 @@ void CompOp(): {}
     <EQUIV>
     | <NOTEQUIV>
     | <LTHAN>
-    | <LETHAN
+    | <LETHAN>
     | <GTHAN>
     | <GETHAN>
 }
@@ -212,6 +233,10 @@ void ArgList(): {}
 
 void NempArgList(): {}
 {
-    <ID>
-    | <ID> <COMMA> (NempArgList())
+    <ID> NempArgListPrime()
+}
+
+void NempArgListPrime(): {}
+{
+    <COMMA> (NempArgList())
 }

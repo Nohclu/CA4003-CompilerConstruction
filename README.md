@@ -11,3 +11,4 @@ Compiler construction using JavaCC
 >
 [Using JavaCC](https://cs.lmu.edu/~ray/notes/javacc/)
 [JavaCC Grammar Files](https://javacc.org/javaccgrm)
+[Indirect LR](https://stackoverflow.com/questions/15999916/step-by-step-elimination-of-this-indirect-left-recursion)
