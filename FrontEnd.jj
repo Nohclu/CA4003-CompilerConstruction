@@ -107,12 +107,12 @@ SKIP : {
 
 void Program(): {}
 {
-    (DeclList() FunctionList() <MAIN> <EOF>)
+    DeclList() FunctionList() <MAIN> <EOF>
 }
 
 void DeclList(): {}
 {
-    (Decl() [<SEMIC> DeclList()])?
+    (Decl() <SEMIC> DeclList())?
 }
 
 void Decl(): {}
@@ -123,12 +123,12 @@ void Decl(): {}
 
 void VarDecl(): {}
 {
-    (<VAR> <ID> <COLON> Type())
+    <VAR> <ID> <COLON> Type()
 }
 
 void ConstDecl(): {}
 {
-    (<CONST> <ID> <COLON> Type() <ASSIGN> Expression())
+    <CONST> <ID> <COLON> Type() <ASSIGN> Expression()
 }
 
 void FunctionList(): {}
@@ -138,13 +138,7 @@ void FunctionList(): {}
 
 void Function(): {}
 {
-    Type() <ID> <LBRACKET> ParameterList() <RBRACKET> 
-    <LBRACE>
-    DeclList()
-    <RBRACE>
-    StatementBlock() 
-    <RETURN> <LBRACKET> (Expression())? <RBRACKET><SEMIC>
-    <RBRACE>
+    Type() <ID> <LBRACKET> ParameterList() <RBRACKET> <LBRACE> DeclList() StatementBlock() <RETURN> <LBRACKET> (Expression())? <RBRACKET> <SEMIC> <RBRACE>
 }
 
 void Type(): {}
@@ -161,20 +155,13 @@ void ParameterList(): {}
 
 void NempParameterList(): {}
 {
-      <ID> <COLON> Type() NempParameterListPrime()
-}
-
-void NempParameterListPrime(): {}
-{
-    <COMMA> NempParameterList()
+      <ID> <COLON> Type()
+    | <ID> <COLON> Type() <COMMA> NempParameterList()
 }
 
 void Main(): {}
 {
-    <MAIN> <LBRACE>
-    DeclList()
-    StatementBlock()
-    <RBRACE>
+    <MAIN> <LBRACE> DeclList() StatementBlock() <RBRACE>
 }
 
 void StatementBlock(): {}
@@ -184,29 +171,20 @@ void StatementBlock(): {}
 
 void Statement(): {}
 {
-    <ID> StatementPrime()
+    <ID> <ASSIGN> Expression() <SEMIC>
+    | <ID> <LBRACKET> ArgList() <RBRACKET> <SEMIC>
     | <LBRACE> StatementBlock() <RBRACE>
     | <IF> Condition() <LBRACE> StatementBlock() <RBRACE> <ELSE> <LBRACE> StatementBlock() <RBRACE>
     | <WHILE> Condition() <LBRACE> StatementBlock() <RBRACE>
-    | <SKP> <SEMIC>
-}
-
-void StatementPrime(): {}
-{
-    <ASSIGN> Expression() <SEMIC>
-    | <LBRACKET> ArgList() <RBRACKET> <SEMIC>
+    | <SKP>
 }
 
 void Expression(): {}
 {
-    Fragment() ExpressionPrime()
-    | <ID> <LBRACKET> ArgList() <RBRACKET>
+    Fragment() BinaryArithOp() Fragment()
     | <LBRACKET> Expression() <RBRACKET>
-}
-
-void ExpressionPrime(): {}
-{
-    BinaryArithOp() Fragment()
+    | <ID> <LBRACKET> ArgList() <RBRACKET>
+    | Fragment()
 }
 
 void BinaryArithOp(): {}
@@ -217,30 +195,20 @@ void BinaryArithOp(): {}
 
 void Fragment(): {}
 {
-    <ID> FragmentPrime()
+    <ID>
     | <MINUS_SIGN> <ID>
     | <NUMBER>
     | <TRUE>
     | <FALSE>
-    | <LBRACKET> Expression() <RBRACKET> FragmentPrime()
-}
-
-void FragmentPrime(): {}
-{
-    <LBRACKET> ArgList() <RBRACKET> FragmentPrime()
-    | (ExpressionPrime() FragmentPrime())?
+    | Expression()
 }
 
 void Condition(): {}
 {
-    <TILDE> Condition() ConditionPrime()
-    | <LBRACKET> Condition() <RBRACKET>  ConditionPrime()
-    | Expression() CompOp() Expression() ConditionPrime()
-}
-
-void ConditionPrime(): {}
-{
-    ((<OR> | <AND>) Condition() ConditionPrime())?
+    <TILDE> Condition()
+    | <LBRACKET> Condition() <RBRACKET>
+    | Expression() CompOp() Expression()
+    | Condition() (<OR> | <AND>) Condition()
 }
 
 void CompOp(): {}
@@ -260,10 +228,6 @@ void ArgList(): {}
 
 void NempArgList(): {}
 {
-    <ID> NempArgListPrime()
-}
-
-void NempArgListPrime(): {}
-{
-    <COMMA> (NempArgList())
+    <ID>
+    | <ID> <COMMA> NempArgList() 
 }
