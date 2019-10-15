@@ -1,7 +1,32 @@
 PARSER_BEGIN(FrontEnd)
     public class FrontEnd {
         public static void main(String[] args){
-
+            FrontEnd parser;
+            if (args.length == 0) {
+                System.out.println("FrontEnd Parser: Reading from standard input . . .");
+                parser = new FrontEnd(System.in);
+                } else if (args.length == 1) {
+                    System.out.println("FrontEnd Parser: Reading from file " + args[0] + " . . .");
+                try {
+                    parser = new FrontEnd(new java.io.FileInputStream(args[0]));
+                } catch (java.io.FileNotFoundException e) {
+                    System.out.println("FrontEnd Parser: File " + args[0] + " not found.");
+                    return;
+                }
+            } else {
+                    System.out.println("FrontEnd Parser: Usage is one of:");
+                    System.out.println(" java FrontEndParser < inputfile");
+                    System.out.println("OR");
+                    System.out.println(" java FrontEndParser inputfile");
+                    return;
+            } 
+            try {
+                parser.Program();
+                System.out.println("SLP Parser: SLP program parsed successfully.");
+                } catch (ParseException e) {
+                System.out.println(e.getMessage());
+                System.out.println("SLP Parser: Encountered errors during parse.");
+}
         }
     }
 PARSER_END(FrontEnd)
@@ -48,9 +73,9 @@ TOKEN: {    /* Punctuation */
 
 TOKEN: { /* Numbers and identifiers */
       < #DIGIT : ["0"-"9"] >
-    | < #CHAR : ["a"-"z"] ["A"-"Z"] >
-    | < NUMBER : (<MINUS_SIGN>)? ["1"-"9"] (<DIGIT>)* | "0" >
-    | < ID : (<CHAR>) (<CHAR><DIGIT>)* ("_")* >
+    | < #CHAR : ["a"-"z", "A"-"Z"] >
+    | < NUMBER : ("-")* ["1"-"9"] (<DIGIT>)* | "0" >
+    | < ID : <CHAR> (<CHAR>| "_" | <DIGIT>)* >
 }
 
 TOKEN_MGR_DECLS :
@@ -62,10 +87,12 @@ SKIP : { /*Ignore whitespaces*/
      " "
     | "\t"
     | "\n"
+    | "\f"
+    | "\r"
 }
 
 SKIP : {
-    < "//" (<CHAR> | <DIGIT>)* ("\n" | "\r" | "\r\n") >
+    < "//" ([" " - "~"])* ("\n" | "\r" | "\r\n") >
     | "/*" { commentNesting++; } : IN_COMMENT
 }
 
