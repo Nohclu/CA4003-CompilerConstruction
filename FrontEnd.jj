@@ -201,15 +201,15 @@ void BinaryArithOp(): {}
 
 void Fragment(): {}
 {
-    (<MINUS_SIGN> | {}) <ID> (<LPAR> ArgList() <RPAR> | {})  
-    | <NUMBER> 
-    | <TRUE> 
-    | <FALSE>
+    (<MINUS_SIGN> | {}) <ID> (<LPAR> ArgList() <RPAR> | {}) FragmentPrime()
+    | <NUMBER> FragmentPrime()
+    | <TRUE> FragmentPrime()
+    | <FALSE> FragmentPrime()
 }
 
 void FragmentPrime(): {}
 {
-    BinaryArithOp() Fragment() FragmentPrime()
+    BinaryArithOp() Expression() FragmentPrime()
     | {}
 }
 
@@ -217,7 +217,7 @@ void Condition(): {}
 { 
      <TILDE> Condition() ConditionPrime()
     | <LPAR> Condition() <RPAR> ConditionPrime()
-    | Expression() CompOp() Expression() ConditionPrime()
+    | Fragment() CompOp() Expression() ConditionPrime()
 }
 
 void ConditionPrime(): {}
