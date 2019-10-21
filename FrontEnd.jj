@@ -140,7 +140,11 @@ void FunctionList(): {}
 
 void Function(): {}
 {
-    Type() <ID> <LPAR> ParameterList() <RPAR> <LBRC> DeclList() StatementBlock() <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> <RBRC>
+    Type() <ID> <LPAR> ParameterList() <RPAR> 
+    <LBRC> 
+    DeclList() StatementBlock() 
+    <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> 
+    <RBRC>
 }
 
 void Type(): {}
@@ -163,19 +167,21 @@ void NempParameterList(): {}
 
 void Main(): {}
 {
-    <MAIN> <LBRC> DeclList() StatementBlock() <RBRC>
+    <MAIN> <LBRC> 
+    DeclList() StatementBlock() 
+    <RBRC>
 }
 
 void StatementBlock(): {}
 {
-    Statement() StatementBlock()
+    (Statement() StatementBlock())
     | {}
 }
 
 void Statement(): {}
 {
     <ID> (<ASSIGN> Expression() <SEMIC> | <LPAR> ArgList() <RPAR> <SEMIC>)
-    | <LBRC> StatementBlock() <LBRC>
+    | <LBRC> StatementBlock() <RBRC>
     | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC>
     | <WHILE> Condition() <LBRC> StatementBlock() <RBRC>
     | <SKP> <SEMIC>
@@ -184,8 +190,7 @@ void Statement(): {}
 void Expression(): {}
 {
      Fragment() (BinaryArithOp() Fragment() | {})
-    | <LPAR> Expression() <RPAR>
-    | <ID> <LPAR> ArgList() <RPAR>
+    | <LPAR> Expression() <RPAR> 
 }
 
 void BinaryArithOp(): {}
@@ -196,15 +201,11 @@ void BinaryArithOp(): {}
 
 void Fragment(): {}
 {
-    <ID> (<LPAR> ArgList() <RPAR> | {})
-    | <MINUS_SIGN> <ID> FragmentPrime() 
-    | <NUMBER> FragmentPrime()
-    | <TRUE> FragmentPrime()
-    | <FALSE> FragmentPrime()
-    | <LPAR> Expression() <RPAR> FragmentPrime()
+    (<MINUS_SIGN> | {}) <ID> (<LPAR> ArgList() <RPAR> | {})  
+    | <NUMBER> 
+    | <TRUE> 
+    | <FALSE>
 }
-
-
 
 void FragmentPrime(): {}
 {
