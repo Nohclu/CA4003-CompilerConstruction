@@ -7,10 +7,10 @@ PARSER_BEGIN(FrontEnd)
                 parser = new FrontEnd(System.in);
                 } else if (args.length == 1) {
                     System.out.println("FrontEnd Parser: Reading from file " + args[0] + " . . .");
-                try {
-                    parser = new FrontEnd(new java.io.FileInputStream(args[0]));
-                } catch (java.io.FileNotFoundException e) {
-                    System.out.println("FrontEnd Parser: File " + args[0] + " not found.");
+                    try {
+                        parser = new FrontEnd(new java.io.FileInputStream(args[0]));
+                    } catch (java.io.FileNotFoundException e) {
+                        System.out.println("FrontEnd Parser: File " + args[0] + " not found.");
                     return;
                 }
             } else {
@@ -26,7 +26,7 @@ PARSER_BEGIN(FrontEnd)
                 } catch (ParseException e) {
                 System.out.println(e.getMessage());
                 System.out.println("SLP Parser: Encountered errors during parse.");
-}
+            }
         }
     }
 PARSER_END(FrontEnd)
@@ -54,10 +54,10 @@ TOKEN: {    /* Punctuation */
     | < SEMIC : ";" >
     | < COLON : ":" >
     | < ASSIGN : "=" >
-    | < LBRACE : "{" >
-    | < RBRACE : "}" >
-    | < LBRACKET : "(" >
-    | < RBRACKET : ")" >
+    | < LBRC : "{" >
+    | < RBRC : "}" >
+    | < LPAR : "(" >
+    | < RPAR : ")" >
     | < PLUS_SIGN : "+" >
     | < MINUS_SIGN : "-" >
     | < TILDE : "~" >
@@ -107,12 +107,13 @@ SKIP : {
 
 void Program(): {}
 {
-    DeclList() FunctionList() <MAIN> <EOF>
+    DeclList() FunctionList() Main() <EOF>
 }
 
 void DeclList(): {}
 {
-    (Decl() <SEMIC> DeclList())?
+    Decl() <SEMIC> DeclList() 
+    | {}
 }
 
 void Decl(): {}
@@ -133,12 +134,13 @@ void ConstDecl(): {}
 
 void FunctionList(): {}
 {
-    (Function() FunctionList())?
+    Function() FunctionList()
+    | {}
 }
 
 void Function(): {}
 {
-    Type() <ID> <LBRACKET> ParameterList() <RBRACKET> <LBRACE> DeclList() StatementBlock() <RETURN> <LBRACKET> (Expression())? <RBRACKET> <SEMIC> <RBRACE>
+    Type() <ID> <LPAR> ParameterList() <RPAR> <LBRC> DeclList() StatementBlock() <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> <RBRC>
 }
 
 void Type(): {}
@@ -150,41 +152,40 @@ void Type(): {}
 
 void ParameterList(): {}
 {
-    (NempParameterList())?
+    NempParameterList()
+    | {}
 }
 
 void NempParameterList(): {}
 {
-      <ID> <COLON> Type()
-    | <ID> <COLON> Type() <COMMA> NempParameterList()
+    <ID> <COLON> Type() (<COMMA> NempParameterList() | {})
 }
 
 void Main(): {}
 {
-    <MAIN> <LBRACE> DeclList() StatementBlock() <RBRACE>
+    <MAIN> <LBRC> DeclList() StatementBlock() <RBRC>
 }
 
 void StatementBlock(): {}
 {
-    (Statement() StatementBlock())?
+    Statement() StatementBlock()
+    | {}
 }
 
 void Statement(): {}
 {
-    <ID> <ASSIGN> Expression() <SEMIC>
-    | <ID> <LBRACKET> ArgList() <RBRACKET> <SEMIC>
-    | <LBRACE> StatementBlock() <RBRACE>
-    | <IF> Condition() <LBRACE> StatementBlock() <RBRACE> <ELSE> <LBRACE> StatementBlock() <RBRACE>
-    | <WHILE> Condition() <LBRACE> StatementBlock() <RBRACE>
-    | <SKP>
+    <ID> (<ASSIGN> Expression() <SEMIC> | <LPAR> ArgList() <RPAR> <SEMIC>)
+    | <LBRC> StatementBlock() <LBRC>
+    | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC>
+    | <WHILE> Condition() <LBRC> StatementBlock() <RBRC>
+    | <SKP> <SEMIC>
 }
 
 void Expression(): {}
 {
-    Fragment() BinaryArithOp() Fragment()
-    | <LBRACKET> Expression() <RBRACKET>
-    | <ID> <LBRACKET> ArgList() <RBRACKET>
-    | Fragment()
+     Fragment() (BinaryArithOp() Fragment() | {})
+    | <LPAR> Expression() <RPAR>
+    | <ID> <LPAR> ArgList() <RPAR>
 }
 
 void BinaryArithOp(): {}
@@ -195,20 +196,33 @@ void BinaryArithOp(): {}
 
 void Fragment(): {}
 {
-    <ID>
-    | <MINUS_SIGN> <ID>
-    | <NUMBER>
-    | <TRUE>
-    | <FALSE>
-    | Expression()
+    <ID> (<LPAR> ArgList() <RPAR> | {})
+    | <MINUS_SIGN> <ID> FragmentPrime() 
+    | <NUMBER> FragmentPrime()
+    | <TRUE> FragmentPrime()
+    | <FALSE> FragmentPrime()
+    | <LPAR> Expression() <RPAR> FragmentPrime()
+}
+
+
+
+void FragmentPrime(): {}
+{
+    BinaryArithOp() Fragment() FragmentPrime()
+    | {}
 }
 
 void Condition(): {}
+{ 
+     <TILDE> Condition() ConditionPrime()
+    | <LPAR> Condition() <RPAR> ConditionPrime()
+    | Expression() CompOp() Expression() ConditionPrime()
+}
+
+void ConditionPrime(): {}
 {
-    <TILDE> Condition()
-    | <LBRACKET> Condition() <RBRACKET>
-    | Expression() CompOp() Expression()
-    | Condition() (<OR> | <AND>) Condition()
+    (<OR> | <AND>) Condition() ConditionPrime()
+    | {}
 }
 
 void CompOp(): {}
@@ -223,11 +237,11 @@ void CompOp(): {}
 
 void ArgList(): {}
 {
-    (NempArgList())?
+    NempArgList()
+    | {}
 }
 
 void NempArgList(): {}
 {
-    <ID>
-    | <ID> <COMMA> NempArgList() 
+    <ID> (<COMMA> NempArgList() | {})
 }
