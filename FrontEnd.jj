@@ -1,3 +1,5 @@
+options { IGNORE_CASE = true;}
+
 PARSER_BEGIN(FrontEnd)
     public class FrontEnd {
         public static void main(String[] args){
