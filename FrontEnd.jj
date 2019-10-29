@@ -24,10 +24,10 @@ PARSER_BEGIN(FrontEnd)
             } 
             try {
                 parser.Program();
-                System.out.println("SLP Parser: SLP program parsed successfully.");
+                System.out.println("CCAL Parser: CCAL program parsed successfully.");
                 } catch (ParseException e) {
                 System.out.println(e.getMessage());
-                System.out.println("SLP Parser: Encountered errors during parse.");
+                System.out.println("CCAL Parser: Encountered errors during parse.");
             }
         }
     }
