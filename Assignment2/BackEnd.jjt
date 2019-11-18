@@ -1,0 +1,252 @@
+options { IGNORE_CASE = true;}
+
+PARSER_BEGIN(BackEnd)
+    public class FrontEnd {
+        public static void main(String[] args){
+            FrontEnd parser;
+            if (args.length == 0) {
+                System.out.println("FrontEnd Parser: Reading from standard input . . .");
+                parser = new FrontEnd(System.in);
+                } else if (args.length == 1) {
+                    System.out.println("FrontEnd Parser: Reading from file " + args[0] + " . . .");
+                    try {
+                        parser = new FrontEnd(new java.io.FileInputStream(args[0]));
+                    } catch (java.io.FileNotFoundException e) {
+                        System.out.println("FrontEnd Parser: File " + args[0] + " not found.");
+                    return;
+                }
+            } else {
+                    System.out.println("FrontEnd Parser: Usage is one of:");
+                    System.out.println(" java FrontEndParser < inputfile");
+                    System.out.println("OR");
+                    System.out.println(" java FrontEndParser inputfile");
+                    return;
+            } 
+            try {
+                parser.Program();
+                System.out.println("CCAL Parser: CCAL program parsed successfully.");
+                } catch (ParseException e) {
+                System.out.println(e.getMessage());
+                System.out.println("CCAL Parser: Encountered errors during parse.");
+            }
+        }
+    }
+PARSER_END(BackEnd)
+
+/*Token*/
+
+TOKEN: { /* Keywords */
+    < VAR : "var" >
+    | < CONST : "const" >
+    | < RETURN : "return" >
+    | < BOOLEAN : "boolean" >
+    | < VOID : "void" >
+    | < MAIN : "main" >
+    | < IF : "if" >
+    | < ELSE : "else" >
+    | < TRUE : "true" >
+    | < FALSE : "false" >
+    | < WHILE : "while" >
+    | < SKP : "skip" >
+    | < INTEGER : "integer">
+}
+
+TOKEN: {    /* Punctuation */ 
+    < COMMA : "," >
+    | < SEMIC : ";" >
+    | < COLON : ":" >
+    | < ASSIGN : "=" >
+    | < LBRC : "{" >
+    | < RBRC : "}" >
+    | < LPAR : "(" >
+    | < RPAR : ")" >
+    | < PLUS_SIGN : "+" >
+    | < MINUS_SIGN : "-" >
+    | < TILDE : "~" >
+    | < OR : "||" >
+    | < AND : "&&" >
+    | < EQUIV : "==" >
+    | < NOTEQUIV : "!=" >
+    | < LTHAN : "<" >
+    | < GTHAN : ">" >
+    | < LETHAN : "<=" >
+    | < GETHAN : ">=" >
+}
+
+TOKEN: { /* Numbers and identifiers */
+      < #DIGIT : ["0"-"9"] >
+    | < #CHAR : ["a"-"z", "A"-"Z"] >
+    | < NUMBER : ("-")* ["1"-"9"] (<DIGIT>)* | "0" >
+    | < ID : <CHAR> (<CHAR>| "_" | <DIGIT>)* >
+}
+
+TOKEN_MGR_DECLS :
+{
+    static int commentNesting = 0;
+}
+
+SKIP : { /*Ignore whitespaces*/
+     " "
+    | "\t"
+    | "\n"
+    | "\f"
+    | "\r"
+}
+
+SKIP : {
+    < "//" ([" " - "~"])* ("\n" | "\r" | "\r\n") >
+    | "/*" { commentNesting++; } : IN_COMMENT
+}
+
+<IN_COMMENT> SKIP : {
+      "/*" {commentNesting++; }
+    | "*/" {commentNesting--; 
+            if (commentNesting == 0)
+                SwitchTo(DEFAULT);
+            }
+    | <~[]>
+}
+
+void Program(): {}
+{
+    DeclList() FunctionList() Main() <EOF>
+}
+
+void DeclList(): {}
+{
+    Decl() <SEMIC> DeclList() 
+    | {}
+}
+
+void Decl(): 
+{}
+{
+    VarDecl()
+    | ConstDecl()
+}
+
+void VarDecl() #VAR: 
+{}
+{
+    <VAR> <ID> <COLON> Type()
+}
+
+void ConstDecl(): {}
+{
+    <CONST> <ID> <COLON> Type() <ASSIGN> Expression()
+}
+
+void FunctionList(): {}
+{
+    Function() FunctionList()
+    | {}
+}
+
+void Function(): {}
+{
+    Type() <ID> <LPAR> ParameterList() <RPAR> 
+    <LBRC> 
+    DeclList() StatementBlock() 
+    <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> 
+    <RBRC>
+}
+
+void Type(): {}
+{
+    <INTEGER>
+    | <BOOLEAN>
+    | <VOID>
+}
+
+void ParameterList(): {}
+{
+    NempParameterList()
+    | {}
+}
+
+void NempParameterList(): {}
+{
+    <ID> <COLON> Type() (<COMMA> NempParameterList() | {})
+}
+
+void Main(): {}
+{
+    <MAIN> <LBRC> 
+    DeclList() StatementBlock() 
+    <RBRC>
+}
+
+void StatementBlock(): {}
+{
+    (Statement() StatementBlock())
+    | {}
+}
+
+void Statement(): {}
+{
+    <ID> (<ASSIGN> Expression() <SEMIC> | <LPAR> ArgList() <RPAR> <SEMIC>)
+    | <LBRC> StatementBlock() <RBRC>
+    | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC>
+    | <WHILE> Condition() <LBRC> StatementBlock() <RBRC>
+    | <SKP> <SEMIC>
+}
+
+void Expression(): {}
+{
+     Fragment() (BinaryArithOp() Fragment() | {})
+    | <LPAR> Expression() <RPAR> 
+}
+
+void BinaryArithOp(): {}
+{
+    <PLUS_SIGN> 
+    | <MINUS_SIGN>
+}
+
+void Fragment(): {}
+{
+    (<MINUS_SIGN> | {}) <ID> (<LPAR> ArgList() <RPAR> | {}) FragmentPrime()
+    | <NUMBER> FragmentPrime()
+    | <TRUE> FragmentPrime()
+    | <FALSE> FragmentPrime()
+}
+
+void FragmentPrime(): {}
+{
+    BinaryArithOp() Expression() FragmentPrime()
+    | {}
+}
+
+void Condition(): {}
+{ 
+     <TILDE> Condition() ConditionPrime()
+    | <LPAR> Condition() <RPAR> ConditionPrime()
+    | Fragment() CompOp() Expression() ConditionPrime()
+}
+
+void ConditionPrime(): {}
+{
+    (<OR> | <AND>) Condition() ConditionPrime()
+    | {}
+}
+
+void CompOp(): {}
+{
+    <EQUIV>
+    | <NOTEQUIV>
+    | <LTHAN>
+    | <LETHAN>
+    | <GTHAN>
+    | <GETHAN>
+}
+
+void ArgList(): {}
+{
+    NempArgList()
+    | {}
+}
+
+void NempArgList(): {}
+{
+    <ID> (<COMMA> NempArgList() | {})
+}
