@@ -1,22 +1,21 @@
 options { 
     IGNORE_CASE = true;
     NODE_DEFAULT_VOID = true;
+    MULTI = true;
+    DEBUG_TOKEN_MANAGER = false;
 }
 
 PARSER_BEGIN(BackEnd)
     public class BackEnd {
         public static void main(String[] args){
             BackEnd parser;
-            if (args.length == 0) {
-                System.out.println("BackEnd Parser: Reading from standard input . . .");
-                parser = new BackEnd(System.in);
-                } else if (args.length == 1) {
-                    System.out.println("BackEnd Parser: Reading from file " + args[0] + " . . .");
-                    try {
-                        parser = new BackEnd(new java.io.FileInputStream(args[0]));
-                    } catch (java.io.FileNotFoundException e) {
-                        System.out.println("BackEnd Parser: File " + args[0] + " not found.");
-                        return;
+            if (args.length == 1) {
+                System.out.println("BackEnd Parser: Reading from file " + args[0] + " . . .");
+                try {
+                    parser = new BackEnd(new java.io.FileInputStream(args[0]));
+                } catch (java.io.FileNotFoundException e) {
+                    System.out.println("BackEnd Parser: File " + args[0] + " not found.");
+                    return;
                 }
             } else {
                     System.out.println("BackEnd Parser: Usage is one of:");
@@ -122,22 +121,20 @@ void DeclList(): {}
     | {}
 }
 
-void Decl(): 
-{}
+void Decl(): {}
 {
     VarDecl()
     | ConstDecl()
 }
 
-void VarDecl(): 
-{}
+void VarDecl() #Var: {Token t; String id; String type;} 
 {
-    <VAR> <ID> <COLON> Type()
+    t = <VAR> id = Id() <COLON> type = Type()
 }
 
-void ConstDecl(): {}
+void ConstDecl() #Const: {Token t;}
 {
-    <CONST> <ID> <COLON> Type() <ASSIGN> Expression()
+    t = <CONST> Id() <COLON> Type() <ASSIGN> Expression()
 }
 
 void FunctionList(): {}
@@ -146,20 +143,20 @@ void FunctionList(): {}
     | {}
 }
 
-void Function(): {}
+void Function() #Func: {}
 {
-    Type() <ID> <LPAR> ParameterList() <RPAR> 
+    Type() Id() <LPAR> ParameterList() <RPAR> 
     <LBRC> 
     DeclList() StatementBlock() 
     <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> 
     <RBRC>
 }
 
-void Type(): {}
+String Type() #Type: {Token t;}
 {
-    <INTEGER>
-    | <BOOLEAN>
-    | <VOID>
+    t = <INTEGER> {jjtThis.value = t.image; return t.image;}
+    | t = <BOOLEAN> {jjtThis.value = t.image; return t.image;}
+    | t = <VOID> {jjtThis.value = t.image; return t.image;}
 }
 
 void ParameterList(): {}
@@ -168,9 +165,9 @@ void ParameterList(): {}
     | {}
 }
 
-void NempParameterList(): {}
+void NempParameterList() #NempParam: {}
 {
-    <ID> <COLON> Type() (<COMMA> NempParameterList() | {})
+    Id() <COLON> Type() (<COMMA> NempParameterList() | {})
 }
 
 void Main() #Main: {}
@@ -186,10 +183,10 @@ void StatementBlock(): {}
     | {}
 }
 
-void Statement(): {}
+void Statement() #Statement: {}
 {
-    <ID> (<ASSIGN> Expression() <SEMIC> | <LPAR> ArgList() <RPAR> <SEMIC>)
-    | <LBRC> StatementBlock() <RBRC>
+    Id() (<ASSIGN> Expression() <SEMIC> | <LPAR> ArgList() <RPAR> <SEMIC>)
+    | <LBRC> StatementBlock() <RBRC>{}
     | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC>
     | <WHILE> Condition() <LBRC> StatementBlock() <RBRC>
     | <SKP> <SEMIC>
@@ -201,18 +198,17 @@ void Expression(): {}
     | <LPAR> Expression() <RPAR> 
 }
 
-void BinaryArithOp(): {}
+void BinaryArithOp(): {Token t;}
 {
-    <PLUS_SIGN> 
-    | <MINUS_SIGN>
+    t = <PLUS_SIGN> {jjtThis.value = t.image;} #Plus 
+    | t = <MINUS_SIGN> {jjtThis.value = t.image;} #Minus
 }
 
 void Fragment(): {}
 {
-    (<MINUS_SIGN> | {}) <ID> (<LPAR> ArgList() <RPAR> | {}) FragmentPrime()
-    | <NUMBER> FragmentPrime()
-    | <TRUE> FragmentPrime()
-    | <FALSE> FragmentPrime()
+    (<MINUS_SIGN> | {}) Id() (<LPAR> ArgList() <RPAR> | {}) FragmentPrime()
+    | Num() FragmentPrime()
+    | Bool() FragmentPrime()
 }
 
 void FragmentPrime(): {}
@@ -234,17 +230,17 @@ void ConditionPrime(): {}
     | {}
 }
 
-void CompOp(): {}
+void CompOp(): {Token t;}
 {
-    <EQUIV>
-    | <NOTEQUIV>
-    | <LTHAN>
-    | <LETHAN>
-    | <GTHAN>
-    | <GETHAN>
+    t = <EQUIV> {jjtThis.value = t.image;} #Equiv
+    | t = <NOTEQUIV> {jjtThis.value = t.image;} #NotEquiv 
+    | t = <LTHAN> {jjtThis.value = t.image;} #LThan
+    | t = <LETHAN> {jjtThis.value = t.image;} #LEThan
+    | t = <GTHAN> {jjtThis.value = t.image;} #GThan
+    | t = <GETHAN> {jjtThis.value = t.image;} #GEThan
 }
 
-void ArgList(): {}
+void ArgList() #ArgList: {}
 {
     NempArgList()
     | {}
@@ -252,5 +248,21 @@ void ArgList(): {}
 
 void NempArgList(): {}
 {
-    <ID> (<COMMA> NempArgList() | {})
+    Id() (<COMMA> NempArgList() | {})
+}
+
+String Id() #Id: {Token t;}
+{
+    t = <ID> {jjtThis.value = t.image; return t.image;}
+}
+
+String Num() #Num: {Token t;}
+{
+    t = <NUMBER> {jjtThis.value = t.image;}
+}
+
+String Bool() #Bool: {Token t;}
+{
+    t = <TRUE> {jjtThis.value = t.image;}
+    | t = <FALSE> {jjtThis.value = t.image;}
 }
