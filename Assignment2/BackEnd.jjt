@@ -1,8 +1,9 @@
 options { 
     IGNORE_CASE = true;
     NODE_DEFAULT_VOID = true;
-    MULTI = true;
     DEBUG_TOKEN_MANAGER = false;
+    MULTI = true;
+    NODE_PREFIX = "AST";
 }
 
 PARSER_BEGIN(BackEnd)
@@ -88,7 +89,7 @@ TOKEN_MGR_DECLS :
     static int commentNesting = 0;
 }
 
-SKIP : { /*Ignore whitespaces*/
+SKIP : { /*Ignore whitespace*/
      " "
     | "\t"
     | "\n"
@@ -110,7 +111,7 @@ SKIP : {
     | <~[]>
 }
 
-SimpleNode Program() #Program: {}
+SimpleNode Program() #Root: {}
 {
     DeclList() FunctionList() Main() <EOF> {return jjtThis;}
 }
@@ -127,14 +128,14 @@ void Decl(): {}
     | ConstDecl()
 }
 
-void VarDecl() #Var: {Token t; String id; String type;} 
+void VarDecl() #Var: {Token t; String id; String type;}
 {
     t = <VAR> id = Id() <COLON> type = Type()
 }
 
-void ConstDecl() #Const: {Token t;}
+void ConstDecl() #Const: {Token t; String id; String type;}
 {
-    t = <CONST> Id() <COLON> Type() <ASSIGN> Expression()
+    t = <CONST> id = Id() <COLON> type = Type() <ASSIGN> Expression()
 }
 
 void FunctionList(): {}
@@ -143,21 +144,15 @@ void FunctionList(): {}
     | {}
 }
 
-void Function() #Func: {}
+void Function(): {}
 {
-    Type() Id() <LPAR> ParameterList() <RPAR> 
+    Type() <ID> <LPAR> ParameterList() <RPAR> 
     <LBRC> 
     DeclList() StatementBlock() 
     <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> 
     <RBRC>
 }
 
-String Type() #Type: {Token t;}
-{
-    t = <INTEGER> {jjtThis.value = t.image; return t.image;}
-    | t = <BOOLEAN> {jjtThis.value = t.image; return t.image;}
-    | t = <VOID> {jjtThis.value = t.image; return t.image;}
-}
 
 void ParameterList(): {}
 {
@@ -165,12 +160,12 @@ void ParameterList(): {}
     | {}
 }
 
-void NempParameterList() #NempParam: {}
+void NempParameterList(): {}
 {
-    Id() <COLON> Type() (<COMMA> NempParameterList() | {})
+    <ID> <COLON> Type() (<COMMA> NempParameterList() | {})
 }
 
-void Main() #Main: {}
+void Main() #Main: {Token t;}
 {
     <MAIN> <LBRC> 
     DeclList() StatementBlock() 
@@ -183,11 +178,11 @@ void StatementBlock(): {}
     | {}
 }
 
-void Statement() #Statement: {}
+void Statement(): {Token t;}
 {
-    Id() (<ASSIGN> Expression() <SEMIC> | <LPAR> ArgList() <RPAR> <SEMIC>)
-    | <LBRC> StatementBlock() <RBRC>{}
-    | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC>
+    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign | <LPAR> ArgList() <RPAR> <SEMIC>)
+    | <LBRC> StatementBlock() <RBRC>
+    | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> 
     | <WHILE> Condition() <LBRC> StatementBlock() <RBRC>
     | <SKP> <SEMIC>
 }
@@ -200,15 +195,16 @@ void Expression(): {}
 
 void BinaryArithOp(): {Token t;}
 {
-    t = <PLUS_SIGN> {jjtThis.value = t.image;} #Plus 
-    | t = <MINUS_SIGN> {jjtThis.value = t.image;} #Minus
+    t = <PLUS_SIGN> {jjtThis.value = t.image;} #PLUS
+    | t = <MINUS_SIGN> {jjtThis.value = t.image;} #MINUS
 }
 
-void Fragment(): {}
+void Fragment(): {Token t;}
 {
-    (<MINUS_SIGN> | {}) Id() (<LPAR> ArgList() <RPAR> | {}) FragmentPrime()
+    (<MINUS_SIGN> | {}) t = <ID> (<LPAR> ArgList() <RPAR> | {}) FragmentPrime() #Arith()
     | Num() FragmentPrime()
-    | Bool() FragmentPrime()
+    | <TRUE> FragmentPrime()
+    | <FALSE> FragmentPrime()
 }
 
 void FragmentPrime(): {}
@@ -230,17 +226,17 @@ void ConditionPrime(): {}
     | {}
 }
 
-void CompOp(): {Token t;}
+void CompOp(): {}
 {
-    t = <EQUIV> {jjtThis.value = t.image;} #Equiv
-    | t = <NOTEQUIV> {jjtThis.value = t.image;} #NotEquiv 
-    | t = <LTHAN> {jjtThis.value = t.image;} #LThan
-    | t = <LETHAN> {jjtThis.value = t.image;} #LEThan
-    | t = <GTHAN> {jjtThis.value = t.image;} #GThan
-    | t = <GETHAN> {jjtThis.value = t.image;} #GEThan
+    <EQUIV>
+    | <NOTEQUIV>
+    | <LTHAN>
+    | <LETHAN>
+    | <GTHAN>
+    | <GETHAN>
 }
 
-void ArgList() #ArgList: {}
+void ArgList(): {}
 {
     NempArgList()
     | {}
@@ -248,21 +244,22 @@ void ArgList() #ArgList: {}
 
 void NempArgList(): {}
 {
-    Id() (<COMMA> NempArgList() | {})
+    <ID> (<COMMA> NempArgList() | {})
 }
 
-String Id() #Id: {Token t;}
+String Type() #Type: {Token t;}
+{
+    t = <INTEGER> {jjtThis.value = t.image; return t.image;}
+    | t = <BOOLEAN> {jjtThis.value = t.image; return t.image;}
+    | t = <VOID> {jjtThis.value = t.image; return t.image;}
+}
+
+String Id() #ID: {Token t;}
 {
     t = <ID> {jjtThis.value = t.image; return t.image;}
 }
 
 String Num() #Num: {Token t;}
 {
-    t = <NUMBER> {jjtThis.value = t.image;}
-}
-
-String Bool() #Bool: {Token t;}
-{
-    t = <TRUE> {jjtThis.value = t.image;}
-    | t = <FALSE> {jjtThis.value = t.image;}
+    t = <NUMBER> {jjtThis.value = t.image; return t.image;}
 }

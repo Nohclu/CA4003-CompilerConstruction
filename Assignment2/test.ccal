@@ -1,5 +1,7 @@
 main{
-    var i:integer;
-    i = 1;
-    i = i + 2;
+    var arg1 : integer;
+    var arg2 : integer;
+    const z : integer = 5;
+    arg1 = 10;
+    arg2 = arg1 + z;
 }
