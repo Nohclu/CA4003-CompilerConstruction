@@ -144,9 +144,9 @@ void FunctionList(): {}
     | {}
 }
 
-void Function(): {}
+void Function() #Func: {Token t; String type; String id;}
 {
-    Type() <ID> <LPAR> ParameterList() <RPAR> 
+    type = Type() id = Id() <LPAR> ParameterList() <RPAR> 
     <LBRC> 
     DeclList() StatementBlock() 
     <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> 
@@ -160,9 +160,9 @@ void ParameterList(): {}
     | {}
 }
 
-void NempParameterList(): {}
+void NempParameterList() #Arg: {String id; String type;}
 {
-    <ID> <COLON> Type() (<COMMA> NempParameterList() | {})
+    id = Id() <COLON> type = Type() (<COMMA> NempParameterList() | {})
 }
 
 void Main() #Main: {Token t;}
@@ -178,9 +178,10 @@ void StatementBlock(): {}
     | {}
 }
 
-void Statement(): {Token t;}
+void Statement() #Statement: {Token t;}
 {
-    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign | <LPAR> ArgList() <RPAR> <SEMIC>)
+    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2)
+        | t = <LPAR> ArgList() <RPAR> <SEMIC> #ArgsAssign)
     | <LBRC> StatementBlock() <RBRC>
     | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> 
     | <WHILE> Condition() <LBRC> StatementBlock() <RBRC>
@@ -189,19 +190,22 @@ void Statement(): {Token t;}
 
 void Expression(): {}
 {
-     Fragment() (BinaryArithOp() Fragment() | {})
+     Fragment() (BinaryArithOp() Fragment()
+        | {})
     | <LPAR> Expression() <RPAR> 
 }
 
-void BinaryArithOp(): {Token t;}
+void BinaryArithOp() : {Token t;} 
 {
-    t = <PLUS_SIGN> {jjtThis.value = t.image;} #PLUS
-    | t = <MINUS_SIGN> {jjtThis.value = t.image;} #MINUS
+    t=<PLUS_SIGN> {jjtThis.value = t.image;} #Add(2)   
+    | t=<MINUS_SIGN> {jjtThis.value = t.image;} #Sub(2)
 }
 
 void Fragment(): {Token t;}
 {
-    (<MINUS_SIGN> | {}) t = <ID> (<LPAR> ArgList() <RPAR> | {}) FragmentPrime() #Arith()
+
+    t = <MINUS_SIGN> Id() FragmentPrime() #NegNum(2)
+    | t = <ID>  (<LPAR> ArgList() <RPAR> #ArgList| {} #RefID) FragmentPrime() 
     | Num() FragmentPrime()
     | <TRUE> FragmentPrime()
     | <FALSE> FragmentPrime()
@@ -209,7 +213,7 @@ void Fragment(): {Token t;}
 
 void FragmentPrime(): {}
 {
-    BinaryArithOp() Expression() FragmentPrime()
+    BinaryArithOp() Expression() FragmentPrime() 
     | {}
 }
 
