@@ -178,66 +178,65 @@ void StatementBlock(): {}
     | {}
 }
 
-void Statement() #Statement: {Token t;}
+void Statement(): {Token t;}
 {
-    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2)
-        | t = <LPAR> ArgList() <RPAR> <SEMIC> #ArgsAssign)
+    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2) 
+    | t = <LPAR> ArgList() <RPAR> <SEMIC> #ArgsAssign)
     | <LBRC> StatementBlock() <RBRC>
-    | <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> 
-    | <WHILE> Condition() <LBRC> StatementBlock() <RBRC>
+    | t = <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> {jjtThis.value = t.image;} #If(2)
+    | t = <WHILE> Condition() <LBRC> StatementBlock() <RBRC> #While
     | <SKP> <SEMIC>
 }
 
-void Expression(): {}
+void Expression(): {Token t;}
 {
-     Fragment() (BinaryArithOp() Fragment()
-        | {})
-    | <LPAR> Expression() <RPAR> 
+     Fragment() ExpressionPrime()
+    | <LPAR> Expression() <RPAR> ExpressionPrime()
+}
+
+void ExpressionPrime(): {}
+{
+    BinaryArithOp() ExpressionPrime()
+    | {}
 }
 
 void BinaryArithOp() : {Token t;} 
 {
-    t=<PLUS_SIGN> {jjtThis.value = t.image;} #Add(2)   
-    | t=<MINUS_SIGN> {jjtThis.value = t.image;} #Sub(2)
+    t=<PLUS_SIGN> Expression() #Plus(2)
+    | t=<MINUS_SIGN> Expression() #Minus(2)
 }
 
-void Fragment(): {Token t;}
+void Fragment() : {Token t;}
 {
 
-    t = <MINUS_SIGN> Id() FragmentPrime() #NegNum(2)
-    | t = <ID>  (<LPAR> ArgList() <RPAR> #ArgList| {} #RefID) FragmentPrime() 
-    | Num() FragmentPrime()
-    | <TRUE> FragmentPrime()
-    | <FALSE> FragmentPrime()
-}
-
-void FragmentPrime(): {}
-{
-    BinaryArithOp() Expression() FragmentPrime() 
-    | {}
+    (<MINUS_SIGN> | {}) Id() (<LPAR> ArgList() <RPAR> | {})
+    | Num() 
+    | <TRUE> 
+    | <FALSE> 
 }
 
 void Condition(): {}
 { 
-     <TILDE> Condition() ConditionPrime()
+    <TILDE> Condition() ConditionPrime()
     | <LPAR> Condition() <RPAR> ConditionPrime()
     | Fragment() CompOp() Expression() ConditionPrime()
 }
 
-void ConditionPrime(): {}
+void ConditionPrime(): {Token t;}
 {
-    (<OR> | <AND>) Condition() ConditionPrime()
+    (t = <OR> {jjtThis.value = t.image;} #OR 
+        | t = <AND> {jjtThis.value = t.image;} # AND) Condition() ConditionPrime()
     | {}
 }
 
-void CompOp(): {}
+void CompOp(): {Token t;}
 {
-    <EQUIV>
-    | <NOTEQUIV>
-    | <LTHAN>
-    | <LETHAN>
-    | <GTHAN>
-    | <GETHAN>
+    t = <EQUIV> {jjtThis.value = t.image;} #Equiv(2)
+    | t = <NOTEQUIV> {jjtThis.value = t.image;} #NotEquiv(2)
+    | t = <LTHAN> {jjtThis.value = t.image;} #Lthan(2)
+    | t = <LETHAN> {jjtThis.value = t.image;} #LEThan(2)
+    | t = <GTHAN> {jjtThis.value = t.image;} #Gthan(2)
+    | t = <GETHAN> {jjtThis.value = t.image;} #GEThan(2)
 }
 
 void ArgList(): {}
