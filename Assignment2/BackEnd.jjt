@@ -174,7 +174,7 @@ void Main() #Main: {Token t;}
 
 void StatementBlock(): {}
 {
-    (Statement() StatementBlock())
+    Statement() #SBlock StatementBlock()
     | {}
 }
 
@@ -183,7 +183,7 @@ void Statement(): {Token t;}
     Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2) 
     | t = <LPAR> ArgList() <RPAR> <SEMIC> #ArgsAssign)
     | <LBRC> StatementBlock() <RBRC>
-    | t = <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> {jjtThis.value = t.image;} #If(2)
+    | t = <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> {jjtThis.value = t.image;} #IfBlock(3)
     | t = <WHILE> Condition() <LBRC> StatementBlock() <RBRC> #While
     | <SKP> <SEMIC>
 }
@@ -211,15 +211,15 @@ void Fragment() : {Token t;}
 
     (<MINUS_SIGN> | {}) Id() (<LPAR> ArgList() <RPAR> | {})
     | Num() 
-    | <TRUE> 
-    | <FALSE> 
+    | t = <TRUE> {jjtThis.value = t.image;} #True
+    | t = <FALSE> {jjtThis.value = t.image;} #False
 }
 
 void Condition(): {}
 { 
     <TILDE> Condition() ConditionPrime()
     | <LPAR> Condition() <RPAR> ConditionPrime()
-    | Fragment() CompOp() Expression() ConditionPrime()
+    | Fragment() CompOp() ConditionPrime()
 }
 
 void ConditionPrime(): {Token t;}
@@ -231,12 +231,12 @@ void ConditionPrime(): {Token t;}
 
 void CompOp(): {Token t;}
 {
-    t = <EQUIV> {jjtThis.value = t.image;} #Equiv(2)
-    | t = <NOTEQUIV> {jjtThis.value = t.image;} #NotEquiv(2)
-    | t = <LTHAN> {jjtThis.value = t.image;} #Lthan(2)
-    | t = <LETHAN> {jjtThis.value = t.image;} #LEThan(2)
-    | t = <GTHAN> {jjtThis.value = t.image;} #Gthan(2)
-    | t = <GETHAN> {jjtThis.value = t.image;} #GEThan(2)
+    t = <EQUIV> Expression() #Equiv(2)
+    | t = <NOTEQUIV> Expression() #NotEquiv(2)
+    | t = <LTHAN> Expression() #LThan(2)
+    | t = <LETHAN> Expression() #LEThan(2)
+    | t = <GTHAN> Expression() #GTHAN(2)
+    | t = <GETHAN> Expression() #GeThan(2)
 }
 
 void ArgList(): {}
