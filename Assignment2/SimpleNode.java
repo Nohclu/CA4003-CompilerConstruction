@@ -68,7 +68,9 @@ class SimpleNode implements Node {
         SimpleNode n = (SimpleNode)children[i];
         if (n != null) {
           n.dump(prefix + " ");
-          System.out.println(n.value);
+          if (n.value != null){
+            // System.out.println(n.value);
+          }
         }
       }
     }
