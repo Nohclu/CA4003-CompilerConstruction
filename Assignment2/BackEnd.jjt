@@ -184,8 +184,8 @@ void Statement(): {Token t;}
     | t = <LPAR> ArgList() <RPAR> <SEMIC> #ArgsAssign)
     | <LBRC> StatementBlock() <RBRC>
     | t = <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> {jjtThis.value = t.image;} #IfBlock(3)
-    | t = <WHILE> Condition() <LBRC> StatementBlock() <RBRC> #While
-    | <SKP> <SEMIC>
+    | t = <WHILE> Condition() <LBRC> StatementBlock() <RBRC> #While(2)
+    | t = <SKP> <SEMIC> #Skip
 }
 
 void Expression(): {Token t;}
@@ -219,13 +219,13 @@ void Condition(): {}
 { 
     <TILDE> Condition() ConditionPrime()
     | <LPAR> Condition() <RPAR> ConditionPrime()
-    | Fragment() CompOp() ConditionPrime()
+    | Fragment() (CompOp() | {}) ConditionPrime()
 }
 
 void ConditionPrime(): {Token t;}
 {
-    (t = <OR> {jjtThis.value = t.image;} #OR 
-        | t = <AND> {jjtThis.value = t.image;} # AND) Condition() ConditionPrime()
+    t = <OR> Condition() ConditionPrime() {jjtThis.value = t.image;} #OR(2)
+    | t = <AND> Condition() ConditionPrime() {jjtThis.value = t.image;} #AND(2)
     | {}
 }
 
