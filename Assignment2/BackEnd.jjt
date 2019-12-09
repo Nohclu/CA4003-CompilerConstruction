@@ -213,8 +213,8 @@ void FuncCall() : {}
 
 void Fragment() : {Token t;}
 {
-
-    (<MINUS_SIGN> | {}) Id() FuncCall()
+    t = <MINUS_SIGN> Id() {jjtThis.value = t.image;} #Neg(1) 
+    | Id() FuncCall()
     | Num() 
     | t = <TRUE> {jjtThis.value = t.image;} #True
     | t = <FALSE> {jjtThis.value = t.image;} #False
