@@ -140,7 +140,7 @@ void ConstDecl() #Const: {Token t; String id; String type;}
 
 void FunctionList(): {}
 {
-    Function() FunctionList()
+    Function() #FBlock FunctionList()
     | {}
 }
 
@@ -149,20 +149,20 @@ void Function() #Func: {Token t; String type; String id;}
     type = Type() id = Id() <LPAR> ParameterList() <RPAR> 
     <LBRC> 
     DeclList() StatementBlock() 
-    <RETURN> <LPAR> (Expression() | {}) <RPAR> <SEMIC> 
+    t = <RETURN> <LPAR> (Expression() #Return | {}) <RPAR> <SEMIC> 
     <RBRC>
 }
 
 
-void ParameterList(): {}
+void ParameterList(): {Token t;}
 {
-    NempParameterList()
+    NempParameterList() #ParamList()
     | {}
 }
 
-void NempParameterList() #Arg: {String id; String type;}
+void NempParameterList() #Param: {Token t;}
 {
-    id = Id() <COLON> type = Type() (<COMMA> NempParameterList() | {})
+    Id() <COLON> Type() (<COMMA> NempParameterList() | {})
 }
 
 void Main() #Main: {Token t;}
@@ -180,15 +180,15 @@ void StatementBlock(): {}
 
 void Statement(): {Token t;}
 {
-    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2) 
-    | t = <LPAR> ArgList() <RPAR> <SEMIC> #ArgsAssign)
+    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2) | FuncCall() <SEMIC>)
     | <LBRC> StatementBlock() <RBRC>
-    | t = <IF> Condition() <LBRC> StatementBlock() <RBRC> <ELSE> <LBRC> StatementBlock() <RBRC> {jjtThis.value = t.image;} #IfBlock(3)
+    | t = <IF> Condition() <LBRC> StatementBlock() <RBRC> 
+        <ELSE> <LBRC> StatementBlock() <RBRC> {jjtThis.value = t.image;} #IfBlock(3)
     | t = <WHILE> Condition() <LBRC> StatementBlock() <RBRC> #While(2)
     | t = <SKP> <SEMIC> #Skip
 }
 
-void Expression(): {Token t;}
+void Expression(): {}
 {
      Fragment() ExpressionPrime()
     | <LPAR> Expression() <RPAR> ExpressionPrime()
@@ -205,11 +205,16 @@ void BinaryArithOp() : {Token t;}
     t=<PLUS_SIGN> Expression() #Plus(2)
     | t=<MINUS_SIGN> Expression() #Minus(2)
 }
+void FuncCall() : {}
+{
+    <LPAR> ArgList() <RPAR> #FuncArgs(2)
+    | {}
+}
 
 void Fragment() : {Token t;}
 {
 
-    (<MINUS_SIGN> | {}) Id() (<LPAR> ArgList() <RPAR> | {})
+    (<MINUS_SIGN> | {}) Id() FuncCall()
     | Num() 
     | t = <TRUE> {jjtThis.value = t.image;} #True
     | t = <FALSE> {jjtThis.value = t.image;} #False
@@ -241,13 +246,13 @@ void CompOp(): {Token t;}
 
 void ArgList(): {}
 {
-    NempArgList()
+    NempArgList() #ArgList
     | {}
 }
 
 void NempArgList(): {}
 {
-    <ID> (<COMMA> NempArgList() | {})
+    Id() (<COMMA> NempArgList() | {})
 }
 
 String Type() #Type: {Token t;}
