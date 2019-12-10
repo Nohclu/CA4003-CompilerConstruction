@@ -31,6 +31,8 @@ PARSER_BEGIN(BackEnd)
             try {
                 SimpleNode root = parser.Program();
                 root.dump("");
+                PrintVisitor pv = new PrintVisitor();
+                root.jjtAccept(pv, "");
                 System.out.println("CCAL Parser: CCAL program parsed successfully.");
                 } catch (ParseException e) {
                 System.out.println(e.getMessage());
@@ -133,12 +135,12 @@ void Decl(): {}
 
 void VarDecl() #Var: {Token t; String id; String type;}
 {
-    t = <VAR> id = Id() <COLON> type = Type()
+    t = <VAR> id = LId() <COLON> type = Type()
 }
 
 void ConstDecl() #Const: {Token t; String id; String type;}
 {
-    t = <CONST> id = Id() <COLON> type = Type() <ASSIGN> Expression() 
+    t = <CONST> id = LId() <COLON> type = Type() <ASSIGN> Expression() 
 }
 
 void FunctionList(): {}
@@ -149,7 +151,7 @@ void FunctionList(): {}
 
 void Function() #Func: {Token t; String type; String id;}
 {
-    type = Type() id = Id() <LPAR> ParameterList() <RPAR> 
+    type = Type() id = LId() <LPAR> ParameterList() <RPAR> 
     <LBRC>
     DeclList() StatementBlock() 
     t = <RETURN> <LPAR> (Expression() #Return | {}) <RPAR> <SEMIC> 
@@ -183,7 +185,7 @@ void StatementBlock(): {}
 
 void Statement(): {Token t;}
 {
-    Id() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2) | FuncCall() <SEMIC>)
+    LId() (t = <ASSIGN> Expression() <SEMIC> {jjtThis.value = t.image;} #Assign(2) | FuncCall() <SEMIC>)
     | <LBRC> StatementBlock() <RBRC>
     | t = <IF> Condition() <LBRC> StatementBlock() <RBRC> 
         <ELSE> <LBRC> StatementBlock() <RBRC> {jjtThis.value = t.image;} #IfBlock(3)
@@ -263,6 +265,11 @@ String Type() #Type: {Token t;}
     t = <INTEGER> {jjtThis.value = t.image; return t.image;}
     | t = <BOOLEAN> {jjtThis.value = t.image; return t.image;}
     | t = <VOID> {jjtThis.value = t.image; return t.image;}
+}
+
+String LId() #LID: {Token t;}
+{
+    t = <ID> {jjtThis.value = t.image; return t.image;}
 }
 
 String Id() #ID: {Token t;}
