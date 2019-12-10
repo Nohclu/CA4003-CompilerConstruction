@@ -8,6 +8,8 @@ options {
 
 PARSER_BEGIN(BackEnd)
     public class BackEnd {
+        public static SymbolTable ST = new SymbolTable();
+        
         public static void main(String[] args){
             BackEnd parser;
             if (args.length == 1) {
@@ -130,7 +132,7 @@ void Decl(): {}
 
 void VarDecl() #Var: {Token t; String id; String type;}
 {
-    t = <VAR> id = Id() <COLON> type = Type()
+    t = <VAR> id = Id() <COLON> type = Type() {ST.addSymbol(new SymbolWrapper(id, "var", type));}
 }
 
 void ConstDecl() #Const: {Token t; String id; String type;}
