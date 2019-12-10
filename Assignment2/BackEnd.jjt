@@ -4,6 +4,7 @@ options {
     DEBUG_TOKEN_MANAGER = false;
     MULTI = true;
     NODE_PREFIX = "AST";
+    VISITOR = true;
 }
 
 PARSER_BEGIN(BackEnd)
