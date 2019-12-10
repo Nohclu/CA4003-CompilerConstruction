@@ -12,6 +12,7 @@ public class SymbolTable {
 
     public void openScope() {
         undoStack.addFirst(marker);
+        System.out.println("Scope Opened...");
     }
 
     public void addSymbol(SymbolWrapper sw) {
@@ -29,6 +30,7 @@ public class SymbolTable {
                 ll.addFirst(sw);
             }
         }
+        System.out.println("--------------------------------ADDED SYMBOL(S)--------------------------------");
         printSymbolTable();
     }
 
@@ -42,6 +44,8 @@ public class SymbolTable {
             }
         }
         undoStack.removeFirst();
+        System.out.println("--------------------------------REMOVE SYMBOL(S)--------------------------------");
+        printSymbolTable();
     }
 
     private SymbolWrapper getSymbol(String symbol) {
@@ -66,6 +70,6 @@ public class SymbolTable {
         { 
             System.out.println(itr.next()); 
         }
-        System.out.println("------------------------------- \n\n\n");
+        System.out.println("\n\n");
     }
 }

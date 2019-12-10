@@ -132,12 +132,12 @@ void Decl(): {}
 
 void VarDecl() #Var: {Token t; String id; String type;}
 {
-    t = <VAR> id = Id() <COLON> type = Type() {ST.addSymbol(new SymbolWrapper(id, "var", type));}
+    t = <VAR> id = Id() <COLON> type = Type()
 }
 
 void ConstDecl() #Const: {Token t; String id; String type;}
 {
-    t = <CONST> id = Id() <COLON> type = Type() <ASSIGN> Expression()
+    t = <CONST> id = Id() <COLON> type = Type() <ASSIGN> Expression() 
 }
 
 void FunctionList(): {}
@@ -149,7 +149,7 @@ void FunctionList(): {}
 void Function() #Func: {Token t; String type; String id;}
 {
     type = Type() id = Id() <LPAR> ParameterList() <RPAR> 
-    <LBRC> 
+    <LBRC>
     DeclList() StatementBlock() 
     t = <RETURN> <LPAR> (Expression() #Return | {}) <RPAR> <SEMIC> 
     <RBRC>
@@ -169,7 +169,7 @@ void NempParameterList() #Param: {Token t;}
 
 void Main() #Main: {Token t;}
 {
-    <MAIN> <LBRC> 
+    <MAIN> <LBRC>
     DeclList() StatementBlock() 
     <RBRC>
 }
