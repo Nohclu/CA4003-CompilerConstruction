@@ -131,13 +131,12 @@ public class SCVisitor implements BackEndVisitor {
         } else {
             lhsSW.used = true;
             if (isNumber(rhs)) {
-                if(lhsSW.type.equals("integer")){
+                if (lhsSW.type.equals("integer")) {
                     lhsSW.value = rhs;
                     this.st.addSymbol(lhsSW);
                     return data;
                 } else {
                     throw new java.lang.Error(String.format("ERROR: Cannot assign %s to %s", rhs, lhs));
-
                 }
             } else if (isBool(rhs)) {
                 if (lhsSW.type.equals("boolean")) {
@@ -151,7 +150,7 @@ public class SCVisitor implements BackEndVisitor {
                 rhsSW.used = true;
                 if (lhsSW.type.equals(rhsSW.type)) {
                     lhsSW.value = rhsSW.value;
-                    this.st.addSymbol(lhsSW); 
+                    this.st.addSymbol(lhsSW);
                     return data;
                 } else {
                     throw new java.lang.Error(
@@ -164,11 +163,9 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTIfBlock node, Object data) {
-        System.out.println("IF Block");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("IF Block");
         return data;
     }
 
@@ -210,13 +207,25 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTMinus node, Object data) {
-        String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
-        String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (isNumber(num1) && isNumber(num2)) {
-            throw new java.lang.Error(String.format("ERROR: Was expecting integer - integer"));
+        int ret = 0;
+
+        for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+            String n = (String) node.jjtGetChild(i).jjtAccept(this, data);
+            SymbolWrapper sw = this.st.getSymbol(n);
+            if (isNumber(n)) {
+                ret -= Integer.parseInt(n);
+            } else if (sw != null) {
+                if (sw.type.equals("boolean")) {
+                    throw new java.lang.Error(String.format("ERROR: Cannot subtract type boolean"));
+                } else {
+                    ret -= Integer.parseInt(sw.value);
+                    sw.used = true;
+                }
+            } else {
+                throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", n));
+            }
         }
-        System.out.println(String.format("Minus: %s %s", num1, num2));
-        return data;
+        return (Integer.toString(ret));
     }
 
     public Object visit(ASTFuncArgs node, Object data) {
@@ -249,21 +258,21 @@ public class SCVisitor implements BackEndVisitor {
     public Object visit(ASTOR node, Object data) {
         String bool1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String bool2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isBool(bool1) && isNumber(bool2))) {
+        if (!(isBool(bool1) && isBool(bool2))) {
             throw new java.lang.Error(String.format("ERROR: Was expecting bool || bool"));
         }
         System.out.println(String.format("OR: %s %s", bool1, bool2));
-        return data;
+        return Boolean.toString(Boolean.parseBoolean(bool1) || Boolean.parseBoolean(bool2));
     }
 
     public Object visit(ASTAND node, Object data) {
         String bool1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String bool2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isBool(bool1) && isNumber(bool2))) {
+        if (!(isBool(bool1) && isBool(bool2))) {
             throw new java.lang.Error(String.format("ERROR: Was expecting bool && bool"));
         }
         System.out.println(String.format("And: %s %s", bool1, bool2));
-        return data;
+        return Boolean.toString(Boolean.parseBoolean(bool1) && Boolean.parseBoolean(bool2));
     }
 
     public Object visit(ASTEquiv node, Object data) {
@@ -273,7 +282,7 @@ public class SCVisitor implements BackEndVisitor {
             throw new java.lang.Error(String.format("ERROR: Mismatched types"));
         }
         System.out.println(String.format("Equiv: %s %s", var1, var2));
-        return data;
+        return (var1 == var2);
     }
 
     public Object visit(ASTNotEquiv node, Object data) {
@@ -283,47 +292,115 @@ public class SCVisitor implements BackEndVisitor {
             throw new java.lang.Error(String.format("ERROR: Mismatched types"));
         }
         System.out.println(String.format("NotEquiv: %s %s", var1, var2));
-        return data;
+        return (var1 != var2);
     }
 
     public Object visit(ASTLThan node, Object data) {
         String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isNumber(num1) && isNumber(num2))) {
-            throw new java.lang.Error(String.format("ERROR: Was expecting integer < integer"));
+        SymbolWrapper sw1 = this.st.getSymbol(num1);
+        SymbolWrapper sw2 = this.st.getSymbol(num2);
+        if (isNumber(num1) && isNumber(num2)) {
+            return Boolean.toString(Integer.parseInt(num1) < Integer.parseInt(num2));
+        } else if (sw1 != null && sw2 != null) {
+            if (sw1.type.equals("integer") && sw2.type.equals("integer")) {
+                sw1.used = true;
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) < Integer.parseInt(sw2.value));
+            }
+        } else if (sw1 != null && isNumber(num2)) {
+            if (sw1.type.equals("integer")) {
+                sw1.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) < Integer.parseInt(num2));
+            }
+        } else if (sw2 != null && isNumber(num1)) {
+            if (sw2.type.equals("integer")) {
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(num1) < Integer.parseInt(sw2.value));
+            }
         }
-        System.out.println(String.format("LThan: %s %s", num1, num2));
-        return data;
+        throw new java.lang.Error(String.format("ERROR: Was expecting type integer < type integer"));
     }
 
     public Object visit(ASTLEThan node, Object data) {
         String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isNumber(num1) && isNumber(num2))) {
-            throw new java.lang.Error(String.format("ERROR: Was expecting integer <= integer"));
+        SymbolWrapper sw1 = this.st.getSymbol(num1);
+        SymbolWrapper sw2 = this.st.getSymbol(num2);
+        if (isNumber(num1) && isNumber(num2)) {
+            return Boolean.toString(Integer.parseInt(num1) <= Integer.parseInt(num2));
+        } else if (sw1 != null && sw2 != null) {
+            if (sw1.type.equals("integer") && sw2.type.equals("integer")) {
+                sw1.used = true;
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) <= Integer.parseInt(sw2.value));
+            }
+        } else if (sw1 != null && isNumber(num2)) {
+            if (sw1.type.equals("integer")) {
+                sw1.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) <= Integer.parseInt(num2));
+            }
+        } else if (sw2 != null && isNumber(num1)) {
+            if (sw2.type.equals("integer")) {
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(num1) <= Integer.parseInt(sw2.value));
+            }
         }
-        System.out.println(String.format("LEThan: %s %s", num1, num2));
-        return data;
+        throw new java.lang.Error(String.format("ERROR: Was expecting type integer <= type integer"));
     }
 
     public Object visit(ASTGTHAN node, Object data) {
         String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isNumber(num1) && isNumber(num2))) {
-            throw new java.lang.Error(String.format("ERROR: Was expecting integer > integer"));
+        SymbolWrapper sw1 = this.st.getSymbol(num1);
+        SymbolWrapper sw2 = this.st.getSymbol(num2);
+        if (isNumber(num1) && isNumber(num2)) {
+            return Boolean.toString(Integer.parseInt(num1) > Integer.parseInt(num2));
+        } else if (sw1 != null && sw2 != null) {
+            if (sw1.type.equals("integer") && sw2.type.equals("integer")) {
+                sw1.used = true;
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) > Integer.parseInt(sw2.value));
+            }
+        } else if (sw1 != null && isNumber(num2)) {
+            if (sw1.type.equals("integer")) {
+                sw1.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) > Integer.parseInt(num2));
+            }
+        } else if (sw2 != null && isNumber(num1)) {
+            if (sw2.type.equals("integer")) {
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(num1) > Integer.parseInt(sw2.value));
+            }
         }
-        System.out.println(String.format("GThan: %s %s", num1, num2));
-        return data;
+        throw new java.lang.Error(String.format("ERROR: Was expecting type integer > type integer"));
     }
 
     public Object visit(ASTGeThan node, Object data) {
         String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isNumber(num1) && isNumber(num2))) {
-            throw new java.lang.Error(String.format("ERROR: Was expecting integer >= integer"));
+        SymbolWrapper sw1 = this.st.getSymbol(num1);
+        SymbolWrapper sw2 = this.st.getSymbol(num2);
+        if (isNumber(num1) && isNumber(num2)) {
+            return Boolean.toString(Integer.parseInt(num1) >= Integer.parseInt(num2));
+        } else if (sw1 != null && sw2 != null) {
+            if (sw1.type.equals("integer") && sw2.type.equals("integer")) {
+                sw1.used = true;
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) >= Integer.parseInt(sw2.value));
+            }
+        } else if (sw1 != null && isNumber(num2)) {
+            if (sw1.type.equals("integer")) {
+                sw1.used = true;
+                return Boolean.toString(Integer.parseInt(sw1.value) >= Integer.parseInt(num2));
+            }
+        } else if (sw2 != null && isNumber(num1)) {
+            if (sw2.type.equals("integer")) {
+                sw2.used = true;
+                return Boolean.toString(Integer.parseInt(num1) >= Integer.parseInt(sw2.value));
+            }
         }
-        System.out.println(String.format("GEThan: %s %s", num1, num2));
-        return data;
+        throw new java.lang.Error(String.format("ERROR: Was expecting type integer > type integer"));
     }
 
     public Object visit(ASTArgList node, Object data) {
@@ -362,15 +439,6 @@ public class SCVisitor implements BackEndVisitor {
     private boolean dupDecl(String id) {
         // Check no repeating decls in same scope
         return this.st.searchScope(id);
-    }
-
-    private boolean declRead() {
-        // When popping from stack check all values have been read from
-        return true;
-    }
-
-    private boolean varWrite() {
-        return true;
     }
 
     private boolean isNumber(String s) {
