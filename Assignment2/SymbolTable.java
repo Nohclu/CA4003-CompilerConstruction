@@ -1,13 +1,13 @@
 import java.util.*;
 
-public class SymbolTable {
+public class SymbolTable{
     private Hashtable<String, LinkedList<SymbolWrapper>> symbolTable;
     private Deque<String> undoStack;
-    private String marker = " ";
+    private String marker = " --- ";
 
     SymbolTable() {
         this.symbolTable = new Hashtable<>();
-        this.undoStack = new ArrayDeque();
+        this.undoStack = new ArrayDeque<>();
     }
 
     public void openScope() {
@@ -16,11 +16,11 @@ public class SymbolTable {
     }
 
     public void addSymbol(SymbolWrapper sw) {
-        undoStack.addFirst(sw.id);
-        if (!symbolTable.containsKey(sw.id)) {
+        this.undoStack.addFirst(sw.id);
+        if (!this.symbolTable.containsKey(sw.id)) {
             LinkedList<SymbolWrapper> ll = new LinkedList<SymbolWrapper>();
             ll.addFirst(sw);
-            symbolTable.put(sw.id, ll);
+            this.symbolTable.put(sw.id, ll);
         } else {
             LinkedList<SymbolWrapper> ll = symbolTable.get(sw.id);
             SymbolWrapper sym = getSymbol(sw.id);
@@ -35,22 +35,22 @@ public class SymbolTable {
     }
 
     public void closeScope() {
-        while (undoStack.peekFirst() != marker) {
-            String removedSymbol = undoStack.removeFirst();
+        while (this.undoStack.peekFirst() != marker) {
+            String removedSymbol = this.undoStack.removeFirst();
             SymbolWrapper sw = getSymbol(removedSymbol);
             if (sw != null) {
                 LinkedList<SymbolWrapper> ll = symbolTable.get(sw.id);
                 ll.remove(sw);
             }
         }
-        undoStack.removeFirst();
+        this.undoStack.removeFirst();
         System.out.println("--------------------------------REMOVE SYMBOL(S)--------------------------------");
         printSymbolTable();
     }
 
-    private SymbolWrapper getSymbol(String symbol) {
-        if (symbolTable.containsKey(symbol)) {
-            LinkedList<SymbolWrapper> ll = symbolTable.get(symbol);
+    public SymbolWrapper getSymbol(String symbol) {
+        if (this.symbolTable.containsKey(symbol)) {
+            LinkedList<SymbolWrapper> ll = this.symbolTable.get(symbol);
             for(SymbolWrapper s: ll){
                 if (s.id == symbol) {
                     return s;
@@ -60,13 +60,23 @@ public class SymbolTable {
         return null;
     }
 
+    public boolean searchScope(String symbol) {
+        Iterator<String> it = this.undoStack.iterator();
+        while (it.hasNext() && it.next() != marker){
+            if (it.next() == symbol){
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void printSymbolTable(){
         System.out.println("SymbolTableKeys");
         symbolTable.entrySet().forEach(entry->{
             System.out.println(entry.getKey() + " " + entry.getValue());  
          });
         System.out.println("\nUndoStack");
-        for(Iterator itr = undoStack.iterator(); itr.hasNext();) 
+        for(Iterator<String> itr = undoStack.iterator(); itr.hasNext();) 
         { 
             System.out.println(itr.next()); 
         }

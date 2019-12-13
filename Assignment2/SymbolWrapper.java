@@ -2,33 +2,34 @@ public class SymbolWrapper{
     String id;
     String value;
     String type;
-    String scope;
+    // String scope;
 
     public SymbolWrapper() {
         this.id = "";
         this.value = "";
         this.type = "";
-        this.scope = "";
+        // this.scope = "";
     }
 
     public SymbolWrapper(String id, String value, String type) {
         this.id = id;
         this.value = value;
         this.type = type;
-        this.scope = "global";
+        // this.scope = "global";
     }
 
     public SymbolWrapper(String id, String value, String type, String scope){
         this.id = id;
         this.value = value;
         this.type = type;
-        this.scope = scope;
+        // this.scope = scope;
     }
 
     public void printSymbolWrapper(){
         System.out.println(this.id + "\t" +
                             this.value + "\t" + 
-                            this.type + "\t" +
-                            this.scope);
+                            this.type + "\t"
+                            // this.scope
+                            );
     }
 }
