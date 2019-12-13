@@ -1,11 +1,11 @@
 public class SCVisitor implements BackEndVisitor {
-private SymbolTable st; //scope
-// private Hashtable <String, Boolean> usedDeclarations;
+    private SymbolTable st; // scope
+    // private Hashtable <String, Boolean> usedDeclarations;
 
-public SCVisitor() {
-    super();
-    this.st = new SymbolTable();
-}
+    public SCVisitor() {
+        super();
+        this.st = new SymbolTable();
+    }
 
     public Object visit(SimpleNode node, Object data) {
         throw new RuntimeException("Visit SimpleNode");
@@ -14,7 +14,7 @@ public SCVisitor() {
     public Object visit(ASTRoot node, Object data) {
         System.out.println("\nStart of Root \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println ("Child: "+node.jjtGetChild(i));
+            System.out.println("Child: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
         System.out.println("End of Root \n");
@@ -23,9 +23,10 @@ public SCVisitor() {
     }
 
     public Object visit(ASTVar node, Object data) {
-        String id = (String)node.jjtGetChild(0).jjtAccept(this,data);
-        String type = (String)node.jjtGetChild(1).jjtAccept(this,data);
-        //Check ID Doesnt exist in stack
+        String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String type = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        System.out.println(String.format("Var: %s %s", id, type));
+        // Check ID Doesnt exist in stack
         if (dupDecl(id)) {
             throw new java.lang.Error(String.format("ERROR: Multiple declarations of %s", id));
         } else {
@@ -35,16 +36,16 @@ public SCVisitor() {
     }
 
     public Object visit(ASTConst node, Object data) {
-        String id = (String)node.jjtGetChild(0).jjtAccept(this,data);
-        String type = (String)node.jjtGetChild(1).jjtAccept(this,data);
-        String value = (String)node.jjtGetChild(2).jjtAccept(this,data);
+        String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String type = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        String value = (String) node.jjtGetChild(2).jjtAccept(this, data);
         // Check type and value are the same
-        //Check ID Doesnt exist in stack
+        // Check ID Doesnt exist in stack
         if (dupDecl(id)) {
             throw new java.lang.Error(String.format("ERROR: Multiple declarations of %s", id));
-        } else if(assignTypeCheck(type, value)) {
+        } else if (assignTypeCheck(type, value)) {
             throw new java.lang.Error(String.format("ERROR: Cannot assign %s to ID(%s) of type %s", value, id, type));
-        }else {
+        } else {
             this.st.addSymbol(new SymbolWrapper(id, value, type));
         }
         return data;
@@ -53,7 +54,7 @@ public SCVisitor() {
     public Object visit(ASTFBlock node, Object data) {
         System.out.println("\nStart of FBlock \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println ("FBChild: "+node.jjtGetChild(i));
+            System.out.println("FBChild: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
         System.out.println("End of FBlock \n");
@@ -61,29 +62,30 @@ public SCVisitor() {
     }
 
     public Object visit(ASTFunc node, Object data) {
-        String type = (String)node.jjtGetChild(0).jjtAccept(this,data);
-        String id = (String)node.jjtGetChild(1).jjtAccept(this,data);
+        String type = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String id = (String) node.jjtGetChild(1).jjtAccept(this, data);
         System.out.println(String.format("Func: %s %s", type, id));
-        //Check ID doesnt Exist in stack
+        // Check ID doesnt Exist in stack
         this.st.addSymbol(new SymbolWrapper(id, null, type));
         this.st.openScope();
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        this.st.closeScope();;
+        this.st.closeScope();
+        ;
         return data;
     }
 
     public Object visit(ASTReturn node, Object data) {
-        String id = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        System.out.println("Ret: "+ id);
+        String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        System.out.println("Ret: " + id);
         return node.value;
     }
 
     public Object visit(ASTParamList node, Object data) {
         System.out.println("\nStart of ParamList \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println ("PLChild: "+node.jjtGetChild(i));
+            System.out.println("PLChild: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
         System.out.println("End of ParamList \n");
@@ -93,7 +95,7 @@ public SCVisitor() {
     public Object visit(ASTParam node, Object data) {
         System.out.println("\nStart of Param \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println ("PChild: "+node.jjtGetChild(i));
+            System.out.println("PChild: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
         System.out.println("End of Param \n");
@@ -119,10 +121,46 @@ public SCVisitor() {
     }
 
     public Object visit(ASTAssign node, Object data) {
-        String id = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String val = (String)node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("Assign: %s %s", id, val));
-        return data;
+        String lhs = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String rhs = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        System.out.println(String.format("Assign: %s %s", lhs, rhs));
+        SymbolWrapper lhsSW = this.st.getSymbol(lhs);
+        SymbolWrapper rhsSW = this.st.getSymbol(rhs);
+        if (lhsSW == null) {
+            throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", lhs));
+        } else {
+            lhsSW.used = true;
+            if (isNumber(rhs)) {
+                if(lhsSW.type.equals("integer")){
+                    lhsSW.value = rhs;
+                    this.st.addSymbol(lhsSW);
+                    return data;
+                } else {
+                    throw new java.lang.Error(String.format("ERROR: Cannot assign %s to %s", rhs, lhs));
+
+                }
+            } else if (isBool(rhs)) {
+                if (lhsSW.type.equals("boolean")) {
+                    lhsSW.value = rhs;
+                    this.st.addSymbol(lhsSW);
+                    return data;
+                } else {
+                    throw new java.lang.Error(String.format("ERROR: Cannot assign %s to %s", rhs, lhs));
+                }
+            } else if (rhsSW != null) {
+                rhsSW.used = true;
+                if (lhsSW.type.equals(rhsSW.type)) {
+                    lhsSW.value = rhsSW.value;
+                    this.st.addSymbol(lhsSW); 
+                    return data;
+                } else {
+                    throw new java.lang.Error(
+                            String.format("ERROR: Cannot assign different types %s %s", lhsSW.type, rhsSW.type));
+                }
+            } else {
+                throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", rhs));
+            }
+        }
     }
 
     public Object visit(ASTIfBlock node, Object data) {
@@ -148,17 +186,43 @@ public SCVisitor() {
     }
 
     public Object visit(ASTPlus node, Object data) {
-        return node.value;
+        System.out.println("Plus Start");
+        int ret = 0;
+
+        for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+            String n = (String) node.jjtGetChild(i).jjtAccept(this, data);
+            SymbolWrapper sw = this.st.getSymbol(n);
+            if (isNumber(n)) {
+                ret += Integer.parseInt(n);
+            } else if (sw != null) {
+                if (sw.type.equals("boolean")) {
+                    throw new java.lang.Error(String.format("ERROR: Cannot add type boolean"));
+                } else {
+                    ret += Integer.parseInt(sw.value);
+                    sw.used = true;
+                }
+            } else {
+                throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", n));
+            }
+        }
+        System.out.println("Plus End");
+        return (Integer.toString(ret));
     }
 
     public Object visit(ASTMinus node, Object data) {
-        return node.value;
+        String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (isNumber(num1) && isNumber(num2)) {
+            throw new java.lang.Error(String.format("ERROR: Was expecting integer - integer"));
+        }
+        System.out.println(String.format("Minus: %s %s", num1, num2));
+        return data;
     }
 
     public Object visit(ASTFuncArgs node, Object data) {
         System.out.println("\nStart of FuncArgs \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println ("FuncArgs: "+node.jjtGetChild(i));
+            System.out.println("FuncArgs: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
         System.out.println("End of FuncArgs \n");
@@ -167,9 +231,10 @@ public SCVisitor() {
 
     public Object visit(ASTNeg node, Object data) {
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println ("Neg: "+node.jjtGetChild(i));
+            System.out.println("Neg: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
+        // Negation of bool
         return node.value;
     }
 
@@ -182,57 +247,81 @@ public SCVisitor() {
     }
 
     public Object visit(ASTOR node, Object data) {
-        String bool1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String bool2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("LThan: %s %s", bool1, bool2));
+        String bool1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String bool2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (!(isBool(bool1) && isNumber(bool2))) {
+            throw new java.lang.Error(String.format("ERROR: Was expecting bool || bool"));
+        }
+        System.out.println(String.format("OR: %s %s", bool1, bool2));
         return data;
     }
 
     public Object visit(ASTAND node, Object data) {
-        String bool1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String bool2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("LThan: %s %s", bool1, bool2));
+        String bool1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String bool2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (!(isBool(bool1) && isNumber(bool2))) {
+            throw new java.lang.Error(String.format("ERROR: Was expecting bool && bool"));
+        }
+        System.out.println(String.format("And: %s %s", bool1, bool2));
         return data;
     }
 
     public Object visit(ASTEquiv node, Object data) {
-        String var1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String var2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("LThan: %s %s", var1, var2));
+        String var1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String var2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (assignTypeCheck(var1, var2)) {
+            throw new java.lang.Error(String.format("ERROR: Mismatched types"));
+        }
+        System.out.println(String.format("Equiv: %s %s", var1, var2));
         return data;
     }
 
     public Object visit(ASTNotEquiv node, Object data) {
-        String var1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String var2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("LThan: %s %s", var1, var2));
+        String var1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String var2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (assignTypeCheck(var1, var2)) {
+            throw new java.lang.Error(String.format("ERROR: Mismatched types"));
+        }
+        System.out.println(String.format("NotEquiv: %s %s", var1, var2));
         return data;
     }
 
     public Object visit(ASTLThan node, Object data) {
-        String num1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String num2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
+        String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (!(isNumber(num1) && isNumber(num2))) {
+            throw new java.lang.Error(String.format("ERROR: Was expecting integer < integer"));
+        }
         System.out.println(String.format("LThan: %s %s", num1, num2));
         return data;
     }
 
     public Object visit(ASTLEThan node, Object data) {
-        String num1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String num2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
+        String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (!(isNumber(num1) && isNumber(num2))) {
+            throw new java.lang.Error(String.format("ERROR: Was expecting integer <= integer"));
+        }
         System.out.println(String.format("LEThan: %s %s", num1, num2));
         return data;
     }
 
     public Object visit(ASTGTHAN node, Object data) {
-        String num1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String num2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
+        String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (!(isNumber(num1) && isNumber(num2))) {
+            throw new java.lang.Error(String.format("ERROR: Was expecting integer > integer"));
+        }
         System.out.println(String.format("GThan: %s %s", num1, num2));
         return data;
     }
 
     public Object visit(ASTGeThan node, Object data) {
-        String num1 = (String)node.jjtGetChild(0).jjtAccept(this, data);
-        String num2 = (String)node.jjtGetChild(1).jjtAccept(this, data);
+        String num1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String num2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
+        if (!(isNumber(num1) && isNumber(num2))) {
+            throw new java.lang.Error(String.format("ERROR: Was expecting integer >= integer"));
+        }
         System.out.println(String.format("GEThan: %s %s", num1, num2));
         return data;
     }
@@ -240,7 +329,7 @@ public SCVisitor() {
     public Object visit(ASTArgList node, Object data) {
         System.out.println("\nStart of ArgList \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println ("FuncArgs: "+node.jjtGetChild(i));
+            System.out.println("FuncArgs: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
         System.out.println("End of ArgList \n");
@@ -263,43 +352,42 @@ public SCVisitor() {
         return node.value;
     }
 
-    private boolean assignTypeCheck(String v1, String v2){
-        if (isNumber(v1) && isNumber(v2) ||
-                isBool(v1) && isBool(v2)) {
+    private boolean assignTypeCheck(String v1, String v2) {
+        if (isNumber(v1) && isNumber(v2) || isBool(v1) && isBool(v2)) {
             return true;
         }
         return false;
     }
-    private boolean compOpTypeCheck(String v1, String v2){
-        // GThan LEthan etc
-        return true;
-    }
-    private boolean dupDecl(String id){
+
+    private boolean dupDecl(String id) {
         // Check no repeating decls in same scope
         return this.st.searchScope(id);
     }
-    private boolean declRead(){
-        //When popping from stack check all values have been read from
-        return true;
-    }
-    private boolean varWrite(){
+
+    private boolean declRead() {
+        // When popping from stack check all values have been read from
         return true;
     }
 
-    private boolean isNumber(String s){
-        if(s == null){
+    private boolean varWrite() {
+        return true;
+    }
+
+    private boolean isNumber(String s) {
+        System.out.println(s);
+        if (s == null) {
             return false;
         }
         try {
             int i = Integer.parseInt(s);
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             return false;
         }
         return true;
     }
 
-    private boolean isBool(String s){
-        if(s == null){
+    private boolean isBool(String s) {
+        if (s == null) {
             return false;
         }
         return Boolean.parseBoolean(s);

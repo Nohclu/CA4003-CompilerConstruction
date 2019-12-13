@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class SymbolTable{
+public class SymbolTable {
     private Hashtable<String, LinkedList<SymbolWrapper>> symbolTable;
     private Deque<String> undoStack;
     private String marker = " --- ";
@@ -26,12 +26,14 @@ public class SymbolTable{
         } else {
             LinkedList<SymbolWrapper> ll = symbolTable.get(sw.id);
             SymbolWrapper sym = getSymbol(sw.id);
-            if(sym != null){
+            if (sym != null) {
                 ll.addFirst(ll.remove(ll.indexOf(sym)));
             } else {
                 ll.addFirst(sw);
             }
         }
+        printSymbolTable();
+        ;
     }
 
     public void closeScope() {
@@ -43,11 +45,15 @@ public class SymbolTable{
             String removedSymbol = this.undoStack.removeFirst();
             SymbolWrapper sw = getSymbol(removedSymbol);
             if (sw != null) {
+                // if (sw.used == false){
+                // throw new java.lang.Error(String.format("ERROR: %s was declared but never
+                // used", sw.id));
+                // }
                 LinkedList<SymbolWrapper> ll = symbolTable.get(sw.id);
                 ll.remove(sw);
             }
         }
-        if (!this.undoStack.isEmpty()){
+        if (!this.undoStack.isEmpty()) {
             this.undoStack.removeFirst();
         }
         System.out.println("Scope Closed...");
@@ -56,10 +62,11 @@ public class SymbolTable{
     }
 
     public SymbolWrapper getSymbol(String symbol) {
+        System.out.println("Looking for: " + symbol);
         if (this.symbolTable.containsKey(symbol)) {
             LinkedList<SymbolWrapper> ll = this.symbolTable.get(symbol);
-            for(SymbolWrapper s: ll){
-                if (s.id == symbol) {
+            for (SymbolWrapper s : ll) {
+                if (s.id.equals(symbol)) {
                     return s;
                 }
             }
@@ -70,31 +77,36 @@ public class SymbolTable{
     public boolean searchScope(String symbol) {
         // Iterator<String> it = this.undoStack.iterator();
         System.out.println("Searching scope...");
-        for(Iterator itr = undoStack.iterator();itr.hasNext();)  {
-            if (itr.next().toString().equals(marker)) {
-                return false;
+        try {
+
+            for (Iterator itr = undoStack.iterator(); itr.hasNext();) {
+                if (itr.next().toString().equals(marker)) {
+                    return false;
+                }
+                if (itr.next().toString().equals(symbol)) {
+                    System.out.println("Found symbol...");
+                    return true;
+                }
             }
-            if(itr.next().toString().equals(symbol)){
-                System.out.println("Found symbol...");
-                return true;
-            }
-         }
-         System.out.println("Nothing found...");
+            System.out.println("Nothing found...");
+            return false;
+        } catch (NoSuchElementException e) {
+            System.out.println("Element doesn't exist");
+        }
         return false;
     }
 
-    public void printSymbolTable(){
+    public void printSymbolTable() {
         System.out.println("SymbolTableKeys");
-        symbolTable.entrySet().forEach(entry->{
-            System.out.println(entry.getKey() + " " + entry.getValue());  
+        symbolTable.entrySet().forEach(entry -> {
+            System.out.println(entry.getKey() + " " + entry.getValue());
             for (SymbolWrapper sw : entry.getValue()) {
-                System.out.println(sw.id + " " +sw.type+" "+sw.value);
+                System.out.println(sw.id + " " + sw.type + " " + sw.value);
             }
-         });
+        });
         System.out.println("\nUndoStack");
-        for(Iterator<String> itr = undoStack.iterator(); itr.hasNext();) 
-        { 
-            System.out.println(itr.next()); 
+        for (Iterator<String> itr = undoStack.iterator(); itr.hasNext();) {
+            System.out.println(itr.next());
         }
         System.out.println("\n\n");
     }
