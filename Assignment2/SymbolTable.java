@@ -13,6 +13,8 @@ public class SymbolTable{
     public void openScope() {
         undoStack.addFirst(marker);
         System.out.println("Scope Opened...");
+        System.out.println("--------------------------------ADDED SYMBOL(S)--------------------------------");
+        printSymbolTable();
     }
 
     public void addSymbol(SymbolWrapper sw) {
@@ -30,12 +32,14 @@ public class SymbolTable{
                 ll.addFirst(sw);
             }
         }
-        System.out.println("--------------------------------ADDED SYMBOL(S)--------------------------------");
-        printSymbolTable();
     }
 
     public void closeScope() {
-        while (this.undoStack.peekFirst() != marker) {
+        System.out.println("Scope Closing...");
+        System.out.println("--------------------------------Current SYMBOL(S)--------------------------------");
+        printSymbolTable();
+        while (this.undoStack.peekFirst() != marker && !this.undoStack.isEmpty()) {
+            System.out.println(this.undoStack.peekFirst());
             String removedSymbol = this.undoStack.removeFirst();
             SymbolWrapper sw = getSymbol(removedSymbol);
             if (sw != null) {
@@ -43,7 +47,10 @@ public class SymbolTable{
                 ll.remove(sw);
             }
         }
-        this.undoStack.removeFirst();
+        if (!this.undoStack.isEmpty()){
+            this.undoStack.removeFirst();
+        }
+        System.out.println("Scope Closed...");
         System.out.println("--------------------------------REMOVE SYMBOL(S)--------------------------------");
         printSymbolTable();
     }
@@ -61,19 +68,28 @@ public class SymbolTable{
     }
 
     public boolean searchScope(String symbol) {
-        Iterator<String> it = this.undoStack.iterator();
-        while (it.hasNext() && it.next() != marker){
-            if (it.next() == symbol){
+        // Iterator<String> it = this.undoStack.iterator();
+        System.out.println("Searching scope...");
+        for(Iterator itr = undoStack.iterator();itr.hasNext();)  {
+            if (itr.next().toString().equals(marker)) {
+                return false;
+            }
+            if(itr.next().toString().equals(symbol)){
+                System.out.println("Found symbol...");
                 return true;
             }
-        }
+         }
+         System.out.println("Nothing found...");
         return false;
     }
 
-    private void printSymbolTable(){
+    public void printSymbolTable(){
         System.out.println("SymbolTableKeys");
         symbolTable.entrySet().forEach(entry->{
             System.out.println(entry.getKey() + " " + entry.getValue());  
+            for (SymbolWrapper sw : entry.getValue()) {
+                System.out.println(sw.id + " " +sw.type+" "+sw.value);
+            }
          });
         System.out.println("\nUndoStack");
         for(Iterator<String> itr = undoStack.iterator(); itr.hasNext();) 

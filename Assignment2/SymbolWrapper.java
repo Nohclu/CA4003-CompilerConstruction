@@ -2,12 +2,14 @@ public class SymbolWrapper{
     String id;
     String value;
     String type;
+    Boolean used;
     // String scope;
 
     public SymbolWrapper() {
         this.id = "";
         this.value = "";
         this.type = "";
+        this.used = false;
         // this.scope = "";
     }
 
@@ -15,6 +17,7 @@ public class SymbolWrapper{
         this.id = id;
         this.value = value;
         this.type = type;
+        this.used = false;
         // this.scope = "global";
     }
 
@@ -22,6 +25,7 @@ public class SymbolWrapper{
         this.id = id;
         this.value = value;
         this.type = type;
+        this.used = false;
         // this.scope = scope;
     }
 
