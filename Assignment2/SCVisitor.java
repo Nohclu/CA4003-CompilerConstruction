@@ -1,5 +1,5 @@
 public class SCVisitor implements BackEndVisitor {
-    private SymbolTable st; // scope
+    private SymbolTable st;
 
     public SCVisitor() {
         super();
@@ -11,12 +11,10 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTRoot node, Object data) {
-        System.out.println("\nStart of Root \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println("Child: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("End of Root \n");
+        // End of program
         this.st.closeScope();
         return data;
     }
@@ -61,14 +59,12 @@ public class SCVisitor implements BackEndVisitor {
         String type = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String id = (String) node.jjtGetChild(1).jjtAccept(this, data);
         System.out.println(String.format("Func: %s %s", type, id));
-        // Check ID doesnt Exist in stack
         this.st.addSymbol(new SymbolWrapper(id, null, type));
         this.st.openScope();
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
             node.jjtGetChild(i).jjtAccept(this, data);
         }
         this.st.closeScope();
-        ;
         return data;
     }
 
@@ -121,41 +117,47 @@ public class SCVisitor implements BackEndVisitor {
         String rhs = (String) node.jjtGetChild(1).jjtAccept(this, data);
         System.out.println(String.format("Assign: %s %s", lhs, rhs));
         SymbolWrapper lhsSW = this.st.getSymbol(lhs);
-        SymbolWrapper rhsSW = this.st.getSymbol(rhs);
         if (lhsSW == null) {
             throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", lhs));
         } else {
-            lhsSW.used = true;
-            if (isNumber(rhs)) {
-                if (lhsSW.type.equals("integer")) {
-                    lhsSW.value = rhs;
-                    this.st.addSymbol(lhsSW);
-                    return data;
-                } else {
-                    throw new java.lang.Error(String.format("ERROR: Cannot assign %s to %s", rhs, lhs));
-                }
-            } else if (isBool(rhs)) {
-                if (lhsSW.type.equals("boolean")) {
-                    lhsSW.value = rhs;
-                    this.st.addSymbol(lhsSW);
-                    return data;
-                } else {
-                    throw new java.lang.Error(String.format("ERROR: Cannot assign %s to %s", rhs, lhs));
-                }
-            } else if (rhsSW != null) {
-                rhsSW.used = true;
-                if (lhsSW.type.equals(rhsSW.type)) {
-                    lhsSW.value = rhsSW.value;
-                    this.st.addSymbol(lhsSW);
-                    return data;
-                } else {
-                    throw new java.lang.Error(
-                            String.format("ERROR: Cannot assign different types %s %s", lhsSW.type, rhsSW.type));
-                }
+            System.out.println("LHS Type: "+ lhsSW.type);
+            System.out.println("RHS Type: "+rhs+" "+ getBaseType(rhs));
+            if (lhsSW.type.equals(getBaseType(rhs))) {
+                lhsSW.value = rhs;
+                return data;
             } else {
-                throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", rhs));
+                throw new java.lang.Error(String.format("ERROR: Cannot assign %s to %s", rhs, lhs));
             }
         }
+        
+    }
+
+    public Object visit(ASTNeg node, Object data) {
+        System.out.println("Neg start");
+        String val = (String)node.jjtGetChild(0).jjtAccept(this, data);
+        SymbolWrapper sw = this.st.getSymbol(val);
+        if(sw.type.equals("boolean")){ 
+            if (Boolean.parseBoolean(sw.value) == true) {
+                return (node.value = "false");
+            } else {
+                return (node.value = "true");
+            }
+        }else{
+            return (node.value =(Integer.toString(-1*Integer.parseInt(sw.value))));
+            }
+        // return (node.value = "true");
+        // System.out.println(sw.value);
+        // if (sw.type.equals("boolean")) {
+        //     if (Boolean.parseBoolean(sw.type) == true) {
+        //         return "false";
+        //     } else {
+        //         return "true";
+        //     }
+        // } 
+        // // else if(valT.equals("integer")) {
+        // //     return Integer.toString(-1 * Integer.parseInt(val));
+        // // }
+        // throw new java.lang.Error(String.format("ERROR: Can't negate that"));
     }
 
     public Object visit(ASTIfBlock node, Object data) {
@@ -234,14 +236,6 @@ public class SCVisitor implements BackEndVisitor {
         return data;
     }
 
-    public Object visit(ASTNeg node, Object data) {
-        for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println("Neg: " + node.jjtGetChild(i));
-            node.jjtGetChild(i).jjtAccept(this, data);
-        }
-        // Negation of bool
-        return node.value;
-    }
 
     public Object visit(ASTTrue node, Object data) {
         return node.value;
@@ -436,18 +430,18 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     private String getBaseType(String s) {
+        if (isNumber(s)) {
+            return "integer";
+        }
+        if (isBool(s)) {
+            return "boolean";
+        }
         SymbolWrapper sw = this.st.getSymbol(s);
         if (sw != null) {
             sw.used = true;
             return sw.type;
         }
-        if (isNumber(s)) {
-            return "integer";
-        } else if (isBool(s)) {
-            return "boolean";
-        } else {
-            return null;
-        }
+        return null;
     }
 
     private boolean isNumber(String s) {
@@ -465,8 +459,9 @@ public class SCVisitor implements BackEndVisitor {
 
     private boolean isBool(String s) {
         if (s == null) {
+            System.out.println("hit?");
             return false;
         }
-        return Boolean.parseBoolean(s);
+        return "true".equals(s) || "false".equals(s);
     }
 }
