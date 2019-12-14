@@ -13,7 +13,7 @@ public class SymbolTable {
     public void openScope() {
         undoStack.addFirst(marker);
         System.out.println("Scope Opened...");
-        System.out.println("--------------------------------ADDED SYMBOL(S)--------------------------------");
+        System.out.println("--------------ADDED SYMBOL(S)--------------");
         printSymbolTable();
     }
 
@@ -32,23 +32,20 @@ public class SymbolTable {
                 ll.addFirst(sw);
             }
         }
-        printSymbolTable();
-        ;
     }
 
     public void closeScope() {
         System.out.println("Scope Closing...");
-        System.out.println("--------------------------------Current SYMBOL(S)--------------------------------");
+        System.out.println("--------------Current SYMBOL(S)--------------");
         printSymbolTable();
         while (this.undoStack.peekFirst() != marker && !this.undoStack.isEmpty()) {
             System.out.println(this.undoStack.peekFirst());
             String removedSymbol = this.undoStack.removeFirst();
             SymbolWrapper sw = getSymbol(removedSymbol);
             if (sw != null) {
-                // if (sw.used == false){
-                // throw new java.lang.Error(String.format("ERROR: %s was declared but never
-                // used", sw.id));
-                // }
+                if (sw.used == false){
+                System.out.println(String.format("WARNING: %s was declared but never used", sw.id));
+                }
                 LinkedList<SymbolWrapper> ll = symbolTable.get(sw.id);
                 ll.remove(sw);
             }
@@ -57,7 +54,7 @@ public class SymbolTable {
             this.undoStack.removeFirst();
         }
         System.out.println("Scope Closed...");
-        System.out.println("--------------------------------REMOVE SYMBOL(S)--------------------------------");
+        System.out.println("--------------REMOVE SYMBOL(S)--------------");
         printSymbolTable();
     }
 
