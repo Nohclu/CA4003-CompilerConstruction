@@ -1,6 +1,5 @@
 public class SCVisitor implements BackEndVisitor {
     private SymbolTable st; // scope
-    // private Hashtable <String, Boolean> usedDeclarations;
 
     public SCVisitor() {
         super();
@@ -25,8 +24,6 @@ public class SCVisitor implements BackEndVisitor {
     public Object visit(ASTVar node, Object data) {
         String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String type = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("Var: %s %s", id, type));
-        // Check ID Doesnt exist in stack
         if (dupDecl(id)) {
             throw new java.lang.Error(String.format("ERROR: Multiple declarations of %s", id));
         } else {
@@ -39,16 +36,15 @@ public class SCVisitor implements BackEndVisitor {
         String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String type = (String) node.jjtGetChild(1).jjtAccept(this, data);
         String value = (String) node.jjtGetChild(2).jjtAccept(this, data);
-        // Check type and value are the same
-        // Check ID Doesnt exist in stack
         if (dupDecl(id)) {
             throw new java.lang.Error(String.format("ERROR: Multiple declarations of %s", id));
-        } else if (assignTypeCheck(type, value)) {
-            throw new java.lang.Error(String.format("ERROR: Cannot assign %s to ID(%s) of type %s", value, id, type));
-        } else {
+        } else if (getBaseType(value).equals(type)) {
             this.st.addSymbol(new SymbolWrapper(id, value, type));
+            return data;
+        } else {
+            throw new java.lang.Error(
+                    String.format("ERROR: Cannot assign %s to ID(%s) of type %s", value, id, getBaseType(value)));
         }
-        return data;
     }
 
     public Object visit(ASTFBlock node, Object data) {
@@ -278,21 +274,27 @@ public class SCVisitor implements BackEndVisitor {
     public Object visit(ASTEquiv node, Object data) {
         String var1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String var2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (assignTypeCheck(var1, var2)) {
+        String v1Type = getBaseType(var1);
+        String v2Type = getBaseType(var2);
+        if ((v1Type.equals(v2Type)) && (v1Type != null || v2Type != null)) {
+            System.out.println(String.format("Equiv: %s %s", var1, var2));
+            return Boolean.toString(var1 == var2);
+        } else {
             throw new java.lang.Error(String.format("ERROR: Mismatched types"));
         }
-        System.out.println(String.format("Equiv: %s %s", var1, var2));
-        return (var1 == var2);
     }
 
     public Object visit(ASTNotEquiv node, Object data) {
         String var1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String var2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (assignTypeCheck(var1, var2)) {
+        String v1Type = getBaseType(var1);
+        String v2Type = getBaseType(var2);
+        if ((v1Type.equals(v2Type)) && (v1Type != null || v2Type != null)) {
+            System.out.println(String.format("NotEquiv: %s %s", var1, var2));
+            return Boolean.toString(var1 != var2);
+        } else {
             throw new java.lang.Error(String.format("ERROR: Mismatched types"));
         }
-        System.out.println(String.format("NotEquiv: %s %s", var1, var2));
-        return (var1 != var2);
     }
 
     public Object visit(ASTLThan node, Object data) {
@@ -429,16 +431,23 @@ public class SCVisitor implements BackEndVisitor {
         return node.value;
     }
 
-    private boolean assignTypeCheck(String v1, String v2) {
-        if (isNumber(v1) && isNumber(v2) || isBool(v1) && isBool(v2)) {
-            return true;
-        }
-        return false;
+    private boolean dupDecl(String id) {
+        return this.st.searchScope(id);
     }
 
-    private boolean dupDecl(String id) {
-        // Check no repeating decls in same scope
-        return this.st.searchScope(id);
+    private String getBaseType(String s) {
+        SymbolWrapper sw = this.st.getSymbol(s);
+        if (sw != null) {
+            sw.used = true;
+            return sw.type;
+        }
+        if (isNumber(s)) {
+            return "integer";
+        } else if (isBool(s)) {
+            return "boolean";
+        } else {
+            return null;
+        }
     }
 
     private boolean isNumber(String s) {
@@ -447,7 +456,7 @@ public class SCVisitor implements BackEndVisitor {
             return false;
         }
         try {
-            int i = Integer.parseInt(s);
+            Integer.parseInt(s);
         } catch (NumberFormatException e) {
             return false;
         }
