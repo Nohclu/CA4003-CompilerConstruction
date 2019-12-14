@@ -31,7 +31,7 @@ PARSER_BEGIN(BackEnd)
             try {
                 SimpleNode root = parser.Program();
                 root.dump("");
-                PrintVisitor pv = new PrintVisitor();
+                SCVisitor pv = new SCVisitor();
                 root.jjtAccept(pv, "");
                 System.out.println("CCAL Parser: CCAL program parsed successfully.");
                 } catch (ParseException e) {
