@@ -46,19 +46,15 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTFBlock node, Object data) {
-        System.out.println("\nStart of FBlock \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println("FBChild: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("End of FBlock \n");
         return data;
     }
 
     public Object visit(ASTFunc node, Object data) {
         String type = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String id = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("Func: %s %s", type, id));
         this.st.addSymbol(new SymbolWrapper(id, null, type));
         this.st.openScope();
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
@@ -70,37 +66,28 @@ public class SCVisitor implements BackEndVisitor {
 
     public Object visit(ASTReturn node, Object data) {
         String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
-        System.out.println("Ret: " + id);
         return node.value;
     }
 
     public Object visit(ASTParamList node, Object data) {
-        System.out.println("\nStart of ParamList \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println("PLChild: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("End of ParamList \n");
         return data;
     }
 
     public Object visit(ASTParam node, Object data) {
-        System.out.println("\nStart of Param \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println("PChild: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("End of Param \n");
         return data;
     }
 
     public Object visit(ASTMain node, Object data) {
         this.st.openScope();
-        System.out.println("\nStart of Main \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("End of Main \n");
         this.st.closeScope();
         return data;
     }
@@ -115,13 +102,10 @@ public class SCVisitor implements BackEndVisitor {
     public Object visit(ASTAssign node, Object data) {
         String lhs = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String rhs = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        System.out.println(String.format("Assign: %s %s", lhs, rhs));
         SymbolWrapper lhsSW = this.st.getSymbol(lhs);
         if (lhsSW == null) {
             throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", lhs));
         } else {
-            System.out.println("LHS Type: "+ lhsSW.type);
-            System.out.println("RHS Type: "+rhs+" "+ getBaseType(rhs));
             if (lhsSW.type.equals(getBaseType(rhs))) {
                 lhsSW.value = rhs;
                 return data;
@@ -133,7 +117,6 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTNeg node, Object data) {
-        System.out.println("Neg start");
         String val = (String)node.jjtGetChild(0).jjtAccept(this, data);
         SymbolWrapper sw = this.st.getSymbol(val);
         if(sw.type.equals("boolean")){ 
@@ -145,19 +128,6 @@ public class SCVisitor implements BackEndVisitor {
         }else{
             return (node.value =(Integer.toString(-1*Integer.parseInt(sw.value))));
             }
-        // return (node.value = "true");
-        // System.out.println(sw.value);
-        // if (sw.type.equals("boolean")) {
-        //     if (Boolean.parseBoolean(sw.type) == true) {
-        //         return "false";
-        //     } else {
-        //         return "true";
-        //     }
-        // } 
-        // // else if(valT.equals("integer")) {
-        // //     return Integer.toString(-1 * Integer.parseInt(val));
-        // // }
-        // throw new java.lang.Error(String.format("ERROR: Can't negate that"));
     }
 
     public Object visit(ASTIfBlock node, Object data) {
@@ -168,11 +138,9 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTWhile node, Object data) {
-        System.out.println("While Block");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("While Block");
         return data;
     }
 
@@ -181,7 +149,6 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTPlus node, Object data) {
-        System.out.println("Plus Start");
         int ret = 0;
 
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
@@ -200,7 +167,6 @@ public class SCVisitor implements BackEndVisitor {
                 throw new java.lang.Error(String.format("ERROR: ID(%s) does not exist", n));
             }
         }
-        System.out.println("Plus End");
         return (Integer.toString(ret));
     }
 
@@ -227,12 +193,9 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTFuncArgs node, Object data) {
-        System.out.println("\nStart of FuncArgs \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println("FuncArgs: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("End of FuncArgs \n");
         return data;
     }
 
@@ -248,20 +211,18 @@ public class SCVisitor implements BackEndVisitor {
     public Object visit(ASTOR node, Object data) {
         String bool1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String bool2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isBool(bool1) && isBool(bool2))) {
+        if (!(getBaseType(bool1).equals("boolean") && getBaseType(bool2).equals("boolean"))) {
             throw new java.lang.Error(String.format("ERROR: Was expecting bool || bool"));
         }
-        System.out.println(String.format("OR: %s %s", bool1, bool2));
         return Boolean.toString(Boolean.parseBoolean(bool1) || Boolean.parseBoolean(bool2));
     }
 
     public Object visit(ASTAND node, Object data) {
         String bool1 = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String bool2 = (String) node.jjtGetChild(1).jjtAccept(this, data);
-        if (!(isBool(bool1) && isBool(bool2))) {
+        if (!(getBaseType(bool1).equals("boolean") && getBaseType(bool2).equals("boolean"))) {
             throw new java.lang.Error(String.format("ERROR: Was expecting bool && bool"));
         }
-        System.out.println(String.format("And: %s %s", bool1, bool2));
         return Boolean.toString(Boolean.parseBoolean(bool1) && Boolean.parseBoolean(bool2));
     }
 
@@ -271,7 +232,6 @@ public class SCVisitor implements BackEndVisitor {
         String v1Type = getBaseType(var1);
         String v2Type = getBaseType(var2);
         if ((v1Type.equals(v2Type)) && (v1Type != null || v2Type != null)) {
-            System.out.println(String.format("Equiv: %s %s", var1, var2));
             return Boolean.toString(var1 == var2);
         } else {
             throw new java.lang.Error(String.format("ERROR: Mismatched types"));
@@ -284,7 +244,6 @@ public class SCVisitor implements BackEndVisitor {
         String v1Type = getBaseType(var1);
         String v2Type = getBaseType(var2);
         if ((v1Type.equals(v2Type)) && (v1Type != null || v2Type != null)) {
-            System.out.println(String.format("NotEquiv: %s %s", var1, var2));
             return Boolean.toString(var1 != var2);
         } else {
             throw new java.lang.Error(String.format("ERROR: Mismatched types"));
@@ -400,12 +359,9 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTArgList node, Object data) {
-        System.out.println("\nStart of ArgList \n");
         for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            System.out.println("FuncArgs: " + node.jjtGetChild(i));
             node.jjtGetChild(i).jjtAccept(this, data);
         }
-        System.out.println("End of ArgList \n");
         return data;
     }
 
@@ -445,7 +401,6 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     private boolean isNumber(String s) {
-        System.out.println(s);
         if (s == null) {
             return false;
         }
@@ -459,7 +414,6 @@ public class SCVisitor implements BackEndVisitor {
 
     private boolean isBool(String s) {
         if (s == null) {
-            System.out.println("hit?");
             return false;
         }
         return "true".equals(s) || "false".equals(s);
