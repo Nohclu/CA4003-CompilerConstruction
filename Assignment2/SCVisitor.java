@@ -131,16 +131,23 @@ public class SCVisitor implements BackEndVisitor {
     }
 
     public Object visit(ASTIfBlock node, Object data) {
-        for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            node.jjtGetChild(i).jjtAccept(this, data);
-        }
+        System.out.println("Start of if");
+        node.jjtGetChild(0).jjtAccept(this, data); //Condition
+        this.st.openScope();
+        node.jjtGetChild(1).jjtAccept(this, data); //If Statement block
+        this.st.closeScope();
+        this.st.openScope();
+        node.jjtGetChild(2).jjtAccept(this, data); //Else Statement block
+        this.st.closeScope();
+        System.out.println("End of if");
         return data;
     }
 
     public Object visit(ASTWhile node, Object data) {
-        for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-            node.jjtGetChild(i).jjtAccept(this, data);
-        }
+        node.jjtGetChild(0).jjtAccept(this, data); //Condition
+        this.st.openScope();
+        node.jjtGetChild(0).jjtAccept(this, data);
+        this.st.closeScope();
         return data;
     }
 
